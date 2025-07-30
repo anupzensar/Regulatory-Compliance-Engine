@@ -1,0 +1,277 @@
+ID,Title,Assigned Dev,Dev Comments ,Automable,Section,Estimate,Expected Result,Preconditions,Section Hierarchy,Steps
+T91130467,Session Reminder,,,Y,Session Reminder,30s,"1. Ensure that the Current Session Duration is displayed
+2. Ensure the reminder displays and the player can click/tap ""Continue"" on the dialog box.
+3. Ensure the reminder displays and the player can click/tap ""Exit Game"" on the dialog box.
+
+Example of the Titan Session Reminder
+==========================
+![](index.php?/attachments/get/1582713)","1. You have allocated the session reminder to a created UK account in Axiom by doing the following: 
+- Create a UK user account in Axiom
+- Locate the created UK user account 
+- Select ""Options"" 
+- Select ""SET SESSION REMINDER"" 
+- Enter the period value in seconds 
+- Select ""SET""",Market X - UK [10 Mins] > Session Reminder,"1. Launch the game
+2. Play out your game until you have played for the session reminder period set out (refresh the game if it does not immediately reflect)"
+T91130468,Ensure that session reminders pop up in game,,,Y,Session Reminder, ,"1. The session reminder should pop up in game and you should not be able to interact with any part of the game. Full focus must be given to the session reminder.
+
+Example of the Titan Session Reminder
+==========================
+![](index.php?/attachments/get/1582739)","1. You have allocated the session reminder to a created UK account in Axiom by doing the following:
+- Create a UK user account in Axiom
+- Locate the created UK user account
+- Select ""Options""
+- Select ""SET SESSION REMINDER""
+- Enter the period value in seconds
+- Select ""SET""",Market X - UK [10 Mins] > Session Reminder,"1. Launch the game
+2. Play out your game until you have played for the session reminder period set out (refresh the game if it does not immediately reflect)"
+T91130469,Ensure that the continue button takes you back to the game,,,Y,Session Reminder,30s,"1. Ensure that the continue button takes you back to the game
+
+Example of the Titan Session Reminder
+==========================
+![](index.php?/attachments/get/1582834)","1. You have allocated the session reminder to a created UK account in Axiom by doing the following:
+- Create a UK user account in Axiom
+- Locate the created UK user account
+- Select ""Options""
+- Select ""SET SESSION REMINDER""
+- Enter the period value in seconds
+- Select ""SET""",Market X - UK [10 Mins] > Session Reminder,"1. Launch the game
+2. Play out your game until you have played for the session reminder period set out (refresh the game if it does not immediately reflect)"
+T91130470,Ensure that the Exit Game button takes you to the lobby,,,Y,Session Reminder,30s,"1. Ensure that the Exit Game button takes you to the lobby and you are logged out from the casino
+
+Example of the Titan Session Reminder
+==========================
+![](index.php?/attachments/get/1582858)","1. You have allocated the session reminder to a created UK account in Axiom by doing the following:
+- Create a UK user account in Axiom
+- Locate the created UK user account
+- Select ""Options""
+- Select ""SET SESSION REMINDER""
+- Enter the period value in seconds
+- Select ""SET""",Market X - UK [10 Mins] > Session Reminder,"1. Launch the game
+2. Play out your game until you have played for the session reminder period set out (refresh the game if it does not immediately reflect)"
+T91130471,"Ensure that when the session reminder pops up, the game does not continue in the background",,,Y,Session Reminder,60s,"1. Ensure that when the session reminder pops up, the game does not continue in the background.
+2. The session reminder should pop up in game and you should not be able to interact with any part of the game. Full focus must be given to the session reminder.
+
+Example of the Titan Session Reminder
+==========================
+![](index.php?/attachments/get/1582859)","1. You have allocated the session reminder to a created UK account in Axiom by doing the following:
+- Create a UK user account in Axiom
+- Locate the created UK user account
+- Select ""Options""
+- Select ""SET SESSION REMINDER""
+- Enter the period value in seconds
+- Select ""SET""",Market X - UK [10 Mins] > Session Reminder,"1. Launch the game
+2. Play out your game until you have played for the session reminder period set out (refresh the game if it does not immediately reflect)"
+T91130472,"Ensure that when the session reminder pops up, the free spins game does not malfunction",,Malfunction many scenarios,Y,Session Reminder,60s,"1. If the session reminder pops up the Free spins game does not Malfunction - Take note of acceptable behavior below
+2. If the session reminder should pop up in game; you should not be able to interact with any part of the game. Full focus must be given to the session reminder.
+3. If the session reminder does not pop up during freespins ensure that it does pop up as soon as the feature is complete and the player is unable to make any new bets until the session reminder is acknowledged
+
+The following behavior is acceptable when the session reminder is displayed during Freespins:
+- The session reminder may display during/after freespins (Since the Freespins is part of the bet that was placed before the session reminder displays it may continue without breaking regulations)
+- Reels may spin without resolving until the session reminder is acknowledged
+- Freespins may Continue/Pause when the session reminder displays
+
+Example of the Titan Session Reminder
+==========================
+![](index.php?/attachments/get/1582859)","1. You have allocated the session reminder to a created UK account in Axiom by doing the following:
+- Create a UK user account in Axiom
+- Locate the created UK user account
+- Select ""Options""
+- Select ""SET SESSION REMINDER""
+- Enter the period value in seconds
+- Select ""SET""",Market X - UK [10 Mins] > Session Reminder,"1. Launch the game
+2. Trigger Free Spins
+3. Play out your game until you have played for the session reminder period set out (refresh the game if it does not immediately reflect)"
+T91130473,"Ensure that when the session reminder pops up, the Bonus game does not malfunction",,Bonus game precondition required,Y,Session Reminder,60s,"1. If the session reminder pops up the Bonus game does not Malfunction - Take note of acceptable behavior below
+2. If the session reminder should pop up in game; you should not be able to interact with any part of the game. Full focus must be given to the session reminder.
+3. If the session reminder does not pop up during Bonus ensure that it does pop up as soon as the feature is complete and the player is unable to make any new bets until the session reminder is acknowledged
+The following behavior is acceptable when the session reminder is displayed during Bonus:
+- The session reminder may display during/after bonus (Since the bonus is part of the bet that was placed before the session reminder displays it may continue without breaking regulations)
+- Bonus may Continue/Pause when the session reminder displays - This is applicable in Auto Pick/ Autoplay scenarios in the bonus feature
+
+Example of the Titan Session Reminder
+==========================
+![](index.php?/attachments/get/1582859)","1. You have allocated the session reminder to a created UK account in Axiom by doing the following:
+- Create a UK user account in Axiom
+- Locate the created UK user account
+- Select ""Options""
+- Select ""SET SESSION REMINDER""
+- Enter the period value in seconds
+- Select ""SET""",Market X - UK [10 Mins] > Session Reminder,"1. Launch the game
+2. Trigger the Bonus Feature
+3. Play out your game until you have played for the session reminder period set out (refresh the game if it does not immediately reflect)"
+T91130557,In-Game Playcheck Icon,,,Y,General (UK), ,"1. Value add is on the top left corner
+2. Clicking on the Value Add directs you to playcheck",1. Playcheck value add has been enabled on the environment,Market X - Playcheck Regulations [60 Mins] ? > General (UK),"1. Launch the Game you are testing
+2. Verify that the value add is there
+3. Click on the Value add
+4. See expected results"
+T91130558,Ensure the game name Matches in-game Name displayed,,,Y,General (UK), ,"- Ensure that the game name is consistent across all off the above.
+- Ensure that if there is a trademark required , this is visible.
+- Ensure that there are no additional spaces or formatting across all the above
+
+Below is an example of an inconsistency:
+- Sidewinder VS Side Winder
+- Wicked Tales : Dark Red vs Wicked Tales - Dark Red", ,Market X - Playcheck Regulations [60 Mins] ? > General (UK),"1. Open the game and Playcheck side by side
+2. Observe the game name in game and compare to Playcheck (every page)
+3. Observe expected results."
+T91130559,The correct transaction appears,,Playcheck required,Y,General (UK), ,"1. Ensure the win values and reel images display
+2. Ensure the losses are documented and the reel images display","1. Spin and win in the client
+2. Spin and lose in the client",Market X - Playcheck Regulations [60 Mins] ? > General (UK),"1. Launch PlayCheck
+2. Take note of how wins are displayed
+3. See expected result 1
+4. Take note of how the losses  display
+5. See expected result 2"
+T91130560,Ensure all win amounts are displayed with the currency symbol in Playcheck,,Playcheck required,Y,General (UK), ,1. Ensure the Currency Symbol (Euro) is displayed,1. Spin and Win in the client,Market X - Playcheck Regulations [60 Mins] ? > General (UK),"1. Launch PlayCheck
+2. Take note of how wins are displayed"
+T91130668,Helpfile Disclaimers,,,Y,UK, ,"1. Ensure that there is a disclaimer that makes mention that some settings or features may not be available in the game
+
+2. In accordance with UK RTS requirement 7D, the follow line should be added to game Helpfiles:
+- **""Any changes to game rules will be conducted in accordance with regulatory requirements.""**
+
+
+
+Note: See CoE functional update fun21.8.0 https://confluence.gamesglobal.com/display/GCOM/2021+-+Functional+Updates
+- Mandatory: New games as Of April 2021 should accommodate the update in Additional Information
+- Optional: Existing game Helpfiles are not specifically a requirement, but it is suggested that teams make this update in Additional Information to ensure full game compliance.",1. Ensure you have help files for the game open,Market X - Helpfile Regulations [45 Mins] ? > UK,"1. Launch the help files for the game
+2. Navigate to the general section of the help files for that game (Additional Information for New Games/ Things to note about game features for Old Games)
+- Things to note about game features is situated at the top of Flash, Download and Landbased helpfile Table of Contents"
+T91130669,Helpfile Disclaimers  -  Additional settings,,,Y,UK, ,"1. Disclaimer should be visible in Helpfiles that features may not be available within the game.
+2. Ensure Helpfile has information regarding different RTP values other than base game where applicable (Buy Feature / Boost Feature / Respin / Lock N Spin / Boost Nudge Feature)
+3. Ensure Disclaimer has been added to Paytable regarding features may not be available within the game","1. Latest help has been uploaded to the helpfile environment.
+2. Helpfiles is setup for this game.",Market X - Helpfile Regulations [45 Mins] ? > UK,"1. Load the game.
+2. Click help button.
+3. Scroll through helpfile.
+4. See expected result No.1.
+5. Find paytable
+6. See expect result No.3"
+T91130724,Currency Format is Correct - Bet,,,Y,UK General Regulations,120s,"1. The currency format in the game matches the format displayed on Confluence
+2. The currency format between the bet in game and wager overlay is consistent","Verify supported currencies and currency formats here: 
+https://confluence.gamesglobal.com/display/public/PMR/Supported+Currencies",UK Regulation [180 Minutes] > UK General Regulations,"1. Launch the game
+2. Notice your Bet in game and Wager Overlay"
+T91130725,[REG A Fix] Spam the spin button 10 times without test data,,,Y,UK General Regulations, ,"1. The ResponseDuration value must be above 2500 (2.5 seconds) in each message packet in order to comply with regulatory standards 
+2. Refer to the attached video for reference (please note this video shows the value as 3 seconds as it was recorded on the Argentina BA City market)","1. Context for this test case can be found here: https://jira.gamesglobal.com/servicedesk/customer/portal/68/GLI-4456
+2. Ensure no test data is setup on your testing account",UK Regulation [180 Minutes] > UK General Regulations,"1. Launch the game and devtools
+2. In devtools open the ""Network"" tab and filter by ""Message""
+3. Repeatedly tap/click the spin button in the game until 10 transactions are complete 
+4. Select each of the message packets and confirm the ResponseDuration value"
+T91130726,[REG A Fix] Spam the spin button 10 times with symbol collection test data,,,Y,UK General Regulations, ,"1. The ResponseDuration value must be above 2500 (2.5 seconds) in each message packet in order to comply with regulatory standards 
+2. Refer to the attached video for reference (please note this video shows the value as 3 seconds as it was recorded on the Argentina BA City market)","1. Context for this test case can be found here: https://jira.gamesglobal.com/servicedesk/customer/portal/68/GLI-4456
+2. Ensure symbol collection test data, preferably with a small win achievement, is setup on your testing account",UK Regulation [180 Minutes] > UK General Regulations,"1. Launch the game and devtools
+2. In devtools open the ""Network"" tab and filter by ""Message""
+3. Repeatedly tap/click the spin button in the game until 10 transactions are complete 
+4. Select each of the message packets and confirm the ResponseDuration value"
+T91130727,Menu - Banking Option Works,,,Y,Banking,60s,#NAME?,"1. You are logged in with a real account and currently in the lobby
+2. Cache is cleared",UK Regulation [180 Minutes] > UK General Regulations > Banking,"1. Launch the game
+2. Select the Menu
+3. Observe the Menu item text and the icon
+4. Select the Banking option"
+T91130728,Player can successfully Deposit and Credit Balance updates correctly,,,Y,Banking, ,Player should be able to successfully Deposit and Credit Balance should update correctly,1. You have the game opened in the correct market,UK Regulation [180 Minutes] > UK General Regulations > Banking,"1. Open Game and ensure you have 0 Credit Balance
+2. Click Spin/Bet Max/Autoplay
+3. Upon Banking dialog, click Yes and make a Deposit"
+T91130730,Play for Real Banner Displays and Fades Out,,Required to launch in titan harness then only banner come link update not working,Y,Practice Play,120s,"- On entry to the game there must be a configurable delay before the WIN REAL MONEY button is displayed.
+- The WIN REAL MONEY button must fade in and be displayed for a settable amount of time.
+- The WIN REAL MONEY button must then fade out and remain off screen for a settable amount of time.
+- This must continue cycling for the session.
+- Standard timings are attached for reference or alternatively can be found here: https://confluence.mgsops.net/display/TW/Console+-+Desktop+HTML5+%28V1%29+-+Win+Real+Money+Button","1. Cache is cleared
+2. You are logged in with a practice user account.
+3. You have selected the correct regulated market for testing in Axiom",UK Regulation [180 Minutes] > UK General Regulations > Practice Play,"1. Launch the game
+2. Wait for the Play for Real Banner to display
+3. Notice its behavior and timings when it fades in and out"
+T91130731,Spin Scenarios,,For this we need to set up test data for that user  -  there are two options 1) set using file maneger  2) set using prometheus,Y,UK Wager RTS, ,"1. No errors are thrown
+2. You get the loss result
+3. The reels spin and Wager overlay amount matches the bet on the console 
+4. You get a loss result","1. Ensure the following config is set in UK.json: 
+    ""gameWagerDisplay"": {
+      ""enabled"": true",UK Regulation [180 Minutes] > UK Wager RTS,"1. Launch the game
+2. Take not of the bet amount in the console
+3. Click spin to trigger a loss (see results 1-2)
+4. Choose the min bet in the game
+5. Click spin (see results 1-3)
+6. Choose the max bet in the game
+7.  Click spin to trigger a win (see results 1, 3 & 4)"
+T91130797,Max Bet of £6.35,,For this we need to incease user bet setting from static bet setting on axiom,Y,Max Bet Limit Testing, ,"1. Ensure game loads with £2 as due to the UK bet validations, it won't allow the set max bet of £6.35
+
+# DISCLAIMER -
+# Due to the UK bet validations, any max bet exceeding £5 will change to: 
+# - £2 for older Axiom versions (45.06 and older)
+# - £5 for Axiom version 45.08 and newer","1. Use Axiom Latest Template
+2. DO NOT USE DYNAMIC BET SETTINGS
+3. Select Launch
+4. Ensure you select Titan Version - 4.19.0 or higher
+5. Ensure you select Market - UKQuickfire",UK Regulation [180 Minutes] > UKGC - Helix & Bet Settings Engine > Max Bet Limit Testing,"1. Select your game and game version.
+2. Enter a Quickfire Username( Follow the normal quickfire token process)
+3. Enter a Stake limit (£X.XX) - Enter decimals as well
+4. Click Launch
+5. Select Max Bet
+6. See Expected Results
+7. Spin"
+T91130798,Max Bet of £5.00,,,Y,Max Bet Limit Testing, ,"1. Ensure game should load in with Default bet and you should select Max Bet value form the bet panel.
+2. Value should not exceed £5.00.","1. Use Axiom Latest Template
+2. DO NOT USE DYNAMIC BET SETTINGS
+3. Select Launch
+4. Ensure you select Titan Version - 4.19.0 or higher
+5. Ensure you select Market - UKQuickfire",UK Regulation [180 Minutes] > UKGC - Helix & Bet Settings Engine > Max Bet Limit Testing,"1. Select your game and game version.
+2. Enter a Quickfire Username( Follow the normal quickfire token process)
+3. Enter a Stake limit (£X.XX) - Enter decimals as well
+4. Click Launch
+5. Select Max Bet
+6. See Expected Results
+7. Spin"
+T91130799,Max Bet of £3.00,,,Y,Max Bet Limit Testing, ,"1. Bet setting dialog appears and Game is not stuck in previous bet after you make the change for the new bet limit.
+2. Ensure game should load in with Max Bet value that has been set unless you did not click spin previously.
+3. Ensure that the Max bet is set to a value closest or < than £3 - eg. £3, £2, etc","1. Use Axiom Latest Template
+2. DO NOT USE DYNAMIC BET SETTINGS
+3. Select Launch
+4. Ensure you select Titan Version - 4.19.0 or higher
+5. Ensure you select Market - UKQuickfire",UK Regulation [180 Minutes] > UKGC - Helix & Bet Settings Engine > Max Bet Limit Testing,"1. Select your game and game version.
+2. Enter a Quickfire Username( Follow the normal quickfire token process)
+3. Ensure that you had a Stake limit of £5.00 previously
+4. Enter the Stake limit of £3.00 - Enter decimals as well
+5. Click Launch
+6. Select Max Bet
+7. See Expected Results
+8. Spin"
+T91130800,Max Bet of £2.00,,,Y,Max Bet Limit Testing, ,"1. Bet setting dialog appears and Game is not stuck in previous bet after you make the change for the new bet limit.
+2. Ensure game should load in with Max Bet value that has been set unless you did not click spin previously.
+3. Ensure that the Max bet is set to a value closest or < than £2 - eg. £2, £1.80, etc","1. Use Axiom Latest Template
+2. DO NOT USE DYNAMIC BET SETTINGS
+3. Select Launch
+4. Ensure you select Titan Version - 4.19.0 or higher
+5. Ensure you select Market - UKQuickfire",UK Regulation [180 Minutes] > UKGC - Helix & Bet Settings Engine > Max Bet Limit Testing,"1. Select your game and game version.
+2. Enter a Quickfire Username( Follow the normal quickfire token process)
+3. Ensure that you had a Stake limit of £3.00 previously
+4. Enter the Stake limit of £2.00 - Enter decimals as well
+5. Click Launch
+6. Select Max Bet
+7. See Expected Results
+8. Spin"
+T91130801,Max Bet of £1.75,,,Y,Max Bet Limit Testing, ,"1. Bet setting dialog appears and Game is not stuck in previous bet after you make the change for the new bet limit.
+2. Ensure game should load in with Max Bet value that has been set unless you did not click spin previously.
+3. Ensure that the Max bet is set to a value closest or < than £1.70 - eg. £1.70, £1, etc","1. Use Axiom Latest Template
+2. DO NOT USE DYNAMIC BET SETTINGS
+3. Select Launch
+4. Ensure you select Titan Version - 4.19.0 or higher
+5. Ensure you select Market - UKQuickfire",UK Regulation [180 Minutes] > UKGC - Helix & Bet Settings Engine > Max Bet Limit Testing,"1. Select your game and game version.
+2. Enter a Quickfire Username( Follow the normal quickfire token process)
+3. Ensure that you had a Stake limit of £2.00 previously
+4. Enter the Stake limit of £1.75.00 - Enter decimals as well
+5. Click Launch
+6. Select Max Bet
+7. See Expected Results
+8. Spin"
+T91130802,Dynamic Paytable,,,Y,Paytable, ,"1. Ensure the Paytable is Dynamic and when changing bet limits the Paytable also adjusts accordingly. 
+
+# DISCLAIMER
+# Due to the UK bet validations, any max bet exceeding £5 will change to :
+# - £2 for older Axiom versions (45.06 and older)
+# - £5 for Axiom version 45.08 and newer","1. Use Axiom Latest Template
+2. DO NOT USE DYNAMIC BET SETTINGS
+3. Select Launch
+4. Ensure you select Titan Version - 4.19.0 or higher
+5. Ensure you select Market - UKQuickfire",UK Regulation [180 Minutes] > UKGC - Helix & Bet Settings Engine > Client > Paytable,"1. Select your game and game version.
+2. Enter a Quickfire Username( Follow the normal quickfire token process)
+3. Enter a Stake limit (£X.XX) - Enter decimals as well
+4. Click Launch
+5. Select Max Bet
+6. Open client. 
+7. Open Paytable - See Expected Result "

@@ -1,0 +1,55 @@
+{
+  "appId": "com.regulatorycompliance.engine",
+  "productName": "Regulatory Compliance Engine",
+  "version": "1.0.0",
+  "description": "A desktop application for automated regulatory compliance testing of online games.",
+  "main": "electron/main.js",
+  "files": [
+    "electron/**/*",
+    "frontend/dist/**/*",
+    "backend/**/*"
+  ],
+  "directories": {
+    "buildResources": "electron/renderer/assets"
+  },
+  "win": {
+    "icon": "electron/renderer/assets/icon.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "mac": {
+    "icon": "electron/renderer/assets/icon.ico",
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "linux": {
+    "icon": "electron/renderer/assets/icon.ico",
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "homepage": "http://localhost:3000",
+  "dependencies": {
+    "electron": "^25.0.0"
+  }
+}

@@ -1,31 +1,39 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException , APIRouter
+from fastapi.middleware.cors import CORSMiddleware 
+import uvicorn
+from config import settings
 
-app = FastAPI()
+# include routers
+from routers import temp
+from routers import regression
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+
+
+app = FastAPI(
+    title=settings.API_TITLE,
+    description=settings.API_DESCRIPTION,
+    version=settings.API_VERSION
 )
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
 
-
-@app.post("/run-test")
-async def run_test(request: Request):
-    data = await request.json()
-    game_url = data.get("gameUrl")
-    test_type = data.get("testType")
-    print(f"Game URL: {game_url}")
-    print(f"Test Type: {test_type}")
-    return {"status": "received"}
+# app.include_router(regression)
+app.include_router(temp)
+# CORS middleware with configurable origins - supports Electron
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"] if settings.ALLOWED_ORIGINS == ["*"] else settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],  # Only needed methods
+    allow_headers=["*"],
+)
 
 
 # Run server on port 7000
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="127.0.0.1", port=7000, reload=True)
+    uvicorn.run(
+        "app:app", 
+        host=settings.HOST, 
+        port=settings.PORT, 
+        reload=settings.RELOAD,
+        log_level=settings.LOG_LEVEL
+    )

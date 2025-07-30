@@ -1,0 +1,57 @@
+{
+  "name": "regulatory-compliance-engine",
+  "version": "1.0.0",
+  "description": "Electron application for Regulatory Compliance Engine",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "electron": "electron .",
+    "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron-build": "npm run build && electron .",
+    "electron-with-backend": "npm run build && electron .",
+    "dist": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.6",
+    "@heroicons/react": "^2.2.0",
+    "axios": "^1.6.0",
+    "electron": "^25.0.0",
+    "lucide-react": "^0.294.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0-alpha.24",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@vitejs/plugin-react": "^4.1.1",
+    "concurrently": "^8.2.0",
+    "electron-builder": "^24.0.0",
+    "eslint": "^8.53.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.4",
+    "tailwindcss": "^4.0.0-alpha.24",
+    "vite": "^5.0.0",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.example.regulatorycomplianceengine",
+    "productName": "Regulatory Compliance Engine",
+    "files": [
+      "electron/**/*",
+      "dist/**/*",
+      "backend/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "icon": "public/icon.ico"
+  },
+  "homepage": ".",
+  "license": "MIT"
+}

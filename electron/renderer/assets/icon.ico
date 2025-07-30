@@ -1,0 +1,7 @@
+The file `icon.ico` is typically a binary file that contains the icon data for the application. Since I cannot generate binary files directly, you will need to create or obtain an `.ico` file separately and place it in the specified directory.
+
+You can use an online icon generator or a graphic design tool to create an icon and save it as `icon.ico`. Once you have the icon file, place it in the following directory:
+
+`regulatory-compliance-engine/electron/renderer/assets/icon.ico`
+
+If you need further assistance with any other files or configurations, feel free to ask!
