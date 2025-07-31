@@ -94,7 +94,7 @@ async def get_coordinates(request: TestExecutionRequest):
     )
 
 
-@app.post("/run-test", response_model=TestResponse)
+@app.get("/run-test", response_model=TestResponse)
 async def run_test(request: TestRequest):
     """Submit a compliance test for execution using microservice architecture"""
     try:

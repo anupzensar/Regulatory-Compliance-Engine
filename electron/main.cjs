@@ -155,7 +155,7 @@ async function runFlow(url, flow) {
         const screenshot = image.toPNG();
 
         // Call your API (POST, not GET)
-        const apiResponse = await axios.post('http://localhost:7000/get-coordinates', {
+        const apiResponse = await axios.get('http://localhost:7000/get-coordinates', {
             game_url: url,
             test_type: "UI Element Detection",
             additional_params: { classIds: [flow[i]] },
