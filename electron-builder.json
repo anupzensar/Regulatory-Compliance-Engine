@@ -48,7 +48,7 @@
   "scripts": {
     "postinstall": "electron-builder install-app-deps"
   },
-  "homepage": "http://localhost:3000",
+  "homepage": "http://localhost:5173",
   "dependencies": {
     "electron": "^25.0.0"
   }

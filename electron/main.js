@@ -13,7 +13,7 @@ async function runFlow(url, flow) {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js'),
+            preload: path.join(__dirname, 'preload.js')
         },
     });
 
@@ -27,7 +27,7 @@ async function runFlow(url, flow) {
         const screenshot = image.toPNG();
 
         // Call your API (update fields as needed)
-        const apiResponse = await axios.post('http://localhost:7000/get-coordinates', {
+        const apiResponse = await axios.get('http://localhost:7000/get-coordinates', {
             game_url: url,
             test_type: "UI Element Detection",
             additional_params: { classIds: [flow[i]] },
@@ -57,8 +57,8 @@ app.whenReady().then(() => {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js'),
+            preload: path.join(__dirname, 'preload.js')
         },
     });
-    mainWindow.loadURL('http://localhost:3000'); // or your React build/dev server
+    mainWindow.loadURL('http://localhost:5173'); // or your React build/dev server
 });

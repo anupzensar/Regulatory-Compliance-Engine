@@ -59,7 +59,7 @@ def get_test_types():
     }
 
 
-@app.post("/get-coordinates", response_model=TestExecutionResponse)
+@app.get("/get-coordinates", response_model=TestExecutionResponse)
 async def get_coordinates(request: TestExecutionRequest):
     """
     Detect coordinates of specified class IDs in the provided image using DetectService.
