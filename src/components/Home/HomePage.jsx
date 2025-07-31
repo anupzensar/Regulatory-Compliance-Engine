@@ -61,6 +61,7 @@ const HomePage = () => {
     setTimeout(() => setToast(null), 5000); // Auto-dismiss after 5 seconds
   }, []);
 
+  // Handler to open the game URL in a new tab
   const handleOpenUrl = useCallback(() => {
     if (gameUrl.trim()) {
       let urlToOpen = gameUrl.trim();
@@ -108,10 +109,11 @@ const HomePage = () => {
       if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
         urlToOpen = 'https://' + urlToOpen;
       }
-      window.open(urlToOpen, '_blank', 'noopener,noreferrer');
+      console.log(selectedSubTests);
 
-      const response = await runTest(gameUrl, testType, selectedSubTests);
-      showToast('success', `Test submitted successfully! Test ID: ${response.test_id}`);
+      const flow = [0, 1, 15, 3, 1, 15, 7, 10, 11];
+      await window.electronAPI.runComplianceFlow({ url: gameUrl, flow });
+      showToast('success', 'Compliance flow completed!');
     } catch (err) {
       showToast('error', err.message || 'Failed to submit test');
     }
@@ -125,7 +127,7 @@ const HomePage = () => {
       {/* Hero Section */}
       <section className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-bold text-green-400 mb-2">
-          Automated Compliance Test.                                    
+          Automated Compliance Test.
         </h1>
         <p className="text-lg md:text-xl text-gray-300">
           A smart platform for automated regulatory compliance testing.
@@ -146,9 +148,8 @@ const HomePage = () => {
             id="gameUrl"
             type="url"
             placeholder="Enter game URL (e.g., https://example.com)"
-            className={`w-full px-4 py-2 rounded-lg bg-gray-700 text-white border ${
-              urlError ? 'border-red-500' : 'border-gray-600'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`w-full px-4 py-2 rounded-lg bg-gray-700 text-white border ${urlError ? 'border-red-500' : 'border-gray-600'
+              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
             value={gameUrl}
             onChange={handleUrlChange}
             required
@@ -224,6 +225,7 @@ const HomePage = () => {
 
         {/* Action Buttons */}
         <div className="text-center mt-4 space-y-3">
+          {/* This is a button to open the game URL in a new tab. Onclick logic written above in handleOpenUrl */}
           <button
             type="button"
             onClick={handleOpenUrl}
@@ -296,10 +298,9 @@ const HomePage = () => {
                               type="button"
                               onClick={() => handleSubTestToggle(sub)}
                               className={`w-full text-left p-4 rounded-xl shadow-lg transition-all duration-200 border-2 flex items-center gap-2
-                                ${
-                                  isSelected
-                                    ? 'bg-blue-600 border-blue-400 ring-2 ring-blue-500'
-                                    : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+                                ${isSelected
+                                  ? 'bg-blue-600 border-blue-400 ring-2 ring-blue-500'
+                                  : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
                                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                               disabled={isLoading}
                             >
