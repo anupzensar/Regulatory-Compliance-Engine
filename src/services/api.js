@@ -75,7 +75,7 @@ export const submitComplianceTest = async (gameUrl, testType) => {
 };
 
 export const launchRegression = async (url, headless = true) => {
-  const response = await axios.post('http://localhost:7000/launch-regression', {
+  const response = await axios.get('http://localhost:7000/get-regression', {
     url,
     headless,
   });

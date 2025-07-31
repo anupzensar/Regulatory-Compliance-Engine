@@ -20,3 +20,7 @@ contextBridge.exposeInMainWorld('api', {
     return 'http://localhost:7000';
   }
 });
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  runComplianceFlow: (args) => ipcRenderer.invoke('run-compliance-flow', args),
+});

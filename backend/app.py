@@ -9,8 +9,9 @@ import uvicorn
 import logging
 from config import settings
 from services.test_service_factory import test_service_factory
-from services.base_service import TestExecutionRequest
+from services.base_service import TestExecutionRequest , TestExecutionResponse
 from fastapi import Body
+from typing import List, Optional
 
 # Configure logging
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL.upper()))
@@ -42,9 +43,7 @@ class TestResponse(BaseModel):
     message: str
     test_id: str = None
 
-class RegressionRequest(BaseModel):
-    url: HttpUrl
-    headless: bool = True
+
 
 @app.get("/", response_model=dict)
 def read_root():
@@ -59,7 +58,43 @@ def get_test_types():
         "count": len(test_service_factory.get_available_test_types())
     }
 
-@app.post("/run-test", response_model=TestResponse)
+
+@app.get("/get-coordinates", response_model=TestExecutionResponse)
+async def get_coordinates(request: TestExecutionRequest):
+    """
+    Detect coordinates of specified class IDs in the provided image using DetectService.
+    """
+    # Get DetectService from factory
+    detect_service = test_service_factory.get_service("UI Element Detection")
+    if not detect_service:
+        raise HTTPException(status_code=500, detail="Detection service not available")
+
+    # Prepare TestExecutionRequest for detection
+    test_request = TestExecutionRequest(
+        game_url=request.gameUrl or "",
+        test_type="UI Element Detection",
+        additional_params={"class_ids": request.classIds},
+        image_data=request.imageData
+    )
+
+    # Validate request
+    if not detect_service.validate_request(test_request):
+        raise HTTPException(status_code=400, detail="Invalid request for detection (missing image or class IDs)")
+
+    # Run detection
+    result = await detect_service.execute_test(test_request)
+
+    # Return detection results
+    return TestExecutionResponse(
+        status=result.status,
+        message=result.message,
+        test_id=result.test_id,
+        execution_time=result.execution_time,
+        results=result.results
+    )
+
+
+@app.get("/run-test", response_model=TestResponse)
 async def run_test(request: TestRequest):
     """Submit a compliance test for execution using microservice architecture"""
     try:
