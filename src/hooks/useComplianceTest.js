@@ -1,18 +1,23 @@
 import { useState, useCallback } from 'react';
-import { submitComplianceTest } from '../services/api';
+import { submitComplianceTest, launchRegression } from '../services/api';
 
 export const useComplianceTest = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
 
-  const runTest = useCallback(async (gameUrl, testType) => {
+  const runTest = useCallback(async (gameUrl, testType, selectedSubTests) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
 
     try {
-      const response = await submitComplianceTest(gameUrl, testType);
+      let response;
+      if (testType === 'Regression Testing') {
+        response = await launchRegression(gameUrl, true); // headless true by default
+      } else {
+        response = await submitComplianceTest(gameUrl, testType);
+      }
       setResult(response);
       return response;
     } catch (err) {
