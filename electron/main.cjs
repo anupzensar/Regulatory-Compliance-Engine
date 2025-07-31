@@ -97,8 +97,10 @@ function stopBackendServer() {
 // Function to create the main application window
 function createWindow() {
     const mainWindow = new BrowserWindow({
-        width: 1280,
-        height: 800,
+        width: 1200,        // Set your desired width
+        height: 800,        // Set your desired height
+        minWidth: 800,      // Optional: minimum width
+        minHeight: 600,     // Optional: minimum height
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
