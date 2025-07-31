@@ -1,0 +1,47 @@
+{
+    "payoutVariantId": 552,
+    "attributes": [
+        {
+            "name": "slotBetSettings",
+            "value": [
+                {
+                    "maxSymbolWin": "156.25",
+                    "maxOdds": "999999999",
+                    "maxExposure": "25000.00",
+                    "maxExposureCalc": "Max Exposure \n= Max Win * Max Bet\n= 2500 * paylineCost * Max Coin Size * Max Coins per Line\n= 2500 * 20 * 0.5 * 1\n= 25,000.00\n \nMax Win (2500x) achieved by screen full of Bonus symbols on reels 2, 3 and 4 (reel positions 0,53,43,59,0 on reelset BGReeelset3)",
+                    "multipleRTPBreakdown": [],
+                    "defaultCoinSize": "5",
+                    "defaultNumCoins": "20",
+                    "maxNumCoins": "20",
+                    "minNumCoins": "1",
+                    "maxCoinsPerLine": "1",
+                    "maxBetValue": "1000",
+                    "minBetValue": "1",
+                    "defaultBetValue": "100",
+                    "creditsSupported": true,
+                    "betModelId": "10",
+                    "coinSizeRange": "1,2,5,10,20,25,50",
+                    "name": "USA - Sweepstakes",
+                    "type": "market",
+                    "markets": [
+                        "USA - Sweepstakes"
+                    ]
+                }
+            ],
+            "isDownload": false,
+            "dateModified": "2025-03-10T12:38:16Z",
+            "changeLogId": null,
+            "user": {
+                "userId": 4136,
+                "email": "muzammil.syed@gamesglobal.com",
+                "name": "MUZAMMIL SYED",
+                "identities": [],
+                "id": 4136,
+                "oktaIdentifier": null
+            },
+            "formValueHash": "gP5fZ/GcPjR8ZvwAQauDeAouak8=",
+            "formAttributeId": 320,
+            "changeTrackingId": null
+        }
+    ]
+}

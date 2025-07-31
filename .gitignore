@@ -4,6 +4,7 @@ build/
 release/
 out/
 electron/renderer/dist/
+.venv/
 
 # Node.js dependencies
 node_modules/
@@ -118,3 +119,5 @@ temp/
 # Lock files (optional - remove if you want to commit them)
 # package-lock.json
 # yarn.lock
+
+#pychache
