@@ -29,7 +29,8 @@ class TestServiceFactory:
             PracticePlayService(),
             MaxBetLimitService(),
             DetectService(),
-            RegressionService()  # Register RegressionService here
+            RegressionService(),
+            DetectService()
         ]
         
         for service in services:
@@ -61,5 +62,4 @@ class TestServiceFactory:
         # Execute the test
         return await service.execute_test(request)
 
-# Global factory instance
 test_service_factory = TestServiceFactory()

@@ -61,6 +61,7 @@ const HomePage = () => {
     setTimeout(() => setToast(null), 5000); // Auto-dismiss after 5 seconds
   }, []);
 
+  // Handler to open the game URL in a new tab
   const handleOpenUrl = useCallback(() => {
     if (gameUrl.trim()) {
       let urlToOpen = gameUrl.trim();
@@ -112,6 +113,11 @@ const HomePage = () => {
 
       const response = await runTest(gameUrl, testType, selectedSubTests);
       showToast('success', `Test submitted successfully! Test ID: ${response.test_id}`);
+      console.log(selectedSubTests);
+
+      const flow = [0, 1, 15, 3, 1, 15, 7, 10, 11];
+      await window.electronAPI.runComplianceFlow({ url: gameUrl, flow });
+      showToast('success', 'Compliance flow completed!');
     } catch (err) {
       showToast('error', err.message || 'Failed to submit test');
     }
@@ -223,6 +229,7 @@ const HomePage = () => {
 
         {/* Action Buttons */}
         <div className="text-center mt-4 space-y-3">
+          {/* This is a button to open the game URL in a new tab. Onclick logic written above in handleOpenUrl */}
           <button
             type="button"
             onClick={handleOpenUrl}

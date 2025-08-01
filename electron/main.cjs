@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
+const axios = require('axios');
 
 // Global variable to store backend process
 let backendProcess = null;
@@ -136,6 +137,59 @@ function createWindow() {
     });
 }
 
+// Utility delay function
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Function to run the compliance flow
+async function runFlow(url, flow) {
+    const win = new BrowserWindow({
+        width: 1280,
+        height: 800,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js')
+        },
+    });
+
+    await win.loadURL(url);
+
+    for (let i = 0; i < flow.length; i++) {
+        await delay(5000);
+
+        // Take screenshot
+        const image = await win.capturePage();
+        const screenshot = image.toPNG();
+
+        // Call your API (POST, not GET)
+        const apiResponse = await axios.get('http://localhost:7000/get-coordinates', {
+            game_url: url,
+            test_type: "UI Element Detection",
+            additional_params: { classIds: [flow[i]] },
+            image_data: screenshot.toString('base64'),
+        });
+
+        console.log(`Coordinates for step ${i + 1}:`, apiResponse.data);
+
+        // Simulate click at (x, y) if needed
+        // const { x, y } = apiResponse.data;
+        // await win.webContents.sendInputEvent({ type: 'mouseDown', x, y, button: 'left', clickCount: 1 });
+        // await win.webContents.sendInputEvent({ type: 'mouseUp', x, y, button: 'left', clickCount: 1 });
+    }
+}
+
+// Register IPC handlers at the top level
+ipcMain.handle('check-backend-status', async () => {
+    return backendProcess !== null && !backendProcess.killed;
+});
+
+ipcMain.handle('run-compliance-flow', async (event, { url, flow }) => {
+    await runFlow(url, flow);
+    return { success: true };
+});
+
 // Event when the application is ready
 app.whenReady().then(() => {
     // Start the backend server first
@@ -165,9 +219,4 @@ app.on('activate', () => {
 // Handle app quit event
 app.on('before-quit', () => {
     stopBackendServer();
-});
-
-// IPC handlers
-ipcMain.handle('check-backend-status', async () => {
-    return backendProcess !== null && !backendProcess.killed;
 });
