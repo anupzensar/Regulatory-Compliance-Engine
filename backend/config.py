@@ -19,7 +19,7 @@ class Settings:
         ALLOWED_ORIGINS: List[str] = ["*"]  # Allow all origins for Electron compatibility
     
     # Logging settings
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "info")
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "debug")
     
     # API settings
     API_TITLE: str = os.getenv("API_TITLE", "Regulatory Compliance Engine API")

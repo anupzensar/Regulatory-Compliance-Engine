@@ -16,8 +16,7 @@
     "dist": "npm run build && electron-builder"
   },
   "dependencies": {
-    "@headlessui/react": "^2.2.6",
-    "@heroicons/react": "^2.2.0",
+    "@headlessui/react": "^2.2.7",
     "axios": "^1.6.0",
     "electron": "^25.0.0",
     "lucide-react": "^0.294.0",
