@@ -8,6 +8,7 @@ from .banking_service import BankingService
 from .practice_play_service import PracticePlayService
 from .max_bet_limit_service import MaxBetLimitService
 from .detect_service import DetectService
+from .regression_service import RegressionService
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,8 @@ class TestServiceFactory:
             BankingService(),
             PracticePlayService(),
             MaxBetLimitService(),
+            DetectService(),
+            RegressionService(),
             DetectService()
         ]
         
@@ -59,7 +62,4 @@ class TestServiceFactory:
         # Execute the test
         return await service.execute_test(request)
 
-
-
-# Global factory instance
 test_service_factory = TestServiceFactory()

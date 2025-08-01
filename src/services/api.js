@@ -8,7 +8,6 @@ const API_BASE_URL = isElectron()
   ? window.api.getBackendUrl() 
   : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:7000');
 
-  
 // API client with proper error handling
 import axios from 'axios';
 

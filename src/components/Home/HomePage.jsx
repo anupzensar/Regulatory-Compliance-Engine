@@ -109,6 +109,10 @@ const HomePage = () => {
       if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
         urlToOpen = 'https://' + urlToOpen;
       }
+      window.open(urlToOpen, '_blank', 'noopener,noreferrer');
+
+      const response = await runTest(gameUrl, testType, selectedSubTests);
+      showToast('success', `Test submitted successfully! Test ID: ${response.test_id}`);
       console.log(selectedSubTests);
 
       const flow = [0, 1, 15, 3, 1, 15, 7, 10, 11];
