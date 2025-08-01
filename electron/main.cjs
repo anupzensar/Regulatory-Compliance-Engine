@@ -11,14 +11,14 @@ function startBackendServer() {
     const backendPath = path.join(__dirname, '..', 'backend');
     const pythonScript = path.join(backendPath, 'app.py');
     const venvPath = path.join(backendPath, 'venv');
-    
+
     console.log('Starting Python backend server...');
     console.log('Backend path:', backendPath);
     console.log('Python script:', pythonScript);
-    
+
     let pythonCmd = 'python';
     let args = [pythonScript];
-    
+
     // Check if virtual environment exists and use it
     if (fs.existsSync(venvPath)) {
         const venvPython = path.join(venvPath, 'Scripts', 'python.exe');
@@ -27,10 +27,10 @@ function startBackendServer() {
             console.log('Using virtual environment Python:', venvPython);
         }
     }
-    
+
     // Try different Python commands if venv doesn't work
     const pythonCommands = [pythonCmd, 'python', 'python3', 'py'];
-    
+
     let started = false;
     for (const cmd of pythonCommands) {
         try {
@@ -40,7 +40,7 @@ function startBackendServer() {
                 stdio: ['pipe', 'pipe', 'pipe'],
                 shell: process.platform === 'win32' // Use shell on Windows
             });
-            
+
             backendProcess.stdout.on('data', (data) => {
                 const output = data.toString();
                 console.log(`Backend stdout: ${output}`);
@@ -49,7 +49,7 @@ function startBackendServer() {
                     console.log('Backend server started successfully!');
                 }
             });
-            
+
             backendProcess.stderr.on('data', (data) => {
                 const error = data.toString();
                 console.error(`Backend stderr: ${error}`);
@@ -58,17 +58,24 @@ function startBackendServer() {
                     console.error('Backend error:', error);
                 }
             });
-            
+
+            backendProcess.stdout.on('data', (data) => {
+                process.stdout.write(`[BACKEND] ${data}`);
+            });
+            backendProcess.stderr.on('data', (data) => {
+                process.stderr.write(`[BACKEND ERROR] ${data}`);
+            });
+
             backendProcess.on('close', (code) => {
                 console.log(`Backend process exited with code ${code}`);
                 backendProcess = null;
             });
-            
+
             backendProcess.on('error', (err) => {
                 console.error('Failed to start backend process:', err);
                 backendProcess = null;
             });
-            
+
             console.log(`Backend server starting with ${cmd}, PID: ${backendProcess.pid}`);
             started = true;
             break;
@@ -77,7 +84,7 @@ function startBackendServer() {
             // Continue to next command
         }
     }
-    
+
     if (!started) {
         console.error('Failed to start Python backend server with any Python command');
         console.error('Please ensure Python is installed and the backend dependencies are installed');
@@ -111,7 +118,7 @@ function createWindow() {
 
     // Check if built files exist, otherwise load from dev server
     const builtIndexPath = path.join(__dirname, '..', 'dist', 'index.html');
-    
+
     if (fs.existsSync(builtIndexPath)) {
         // Load the built application (production)
         mainWindow.loadFile(builtIndexPath);
@@ -122,7 +129,7 @@ function createWindow() {
 
     // Open the DevTools for debugging
     // mainWindow.webContents.openDevTools();
-    
+
     // Handle window closed event
     mainWindow.on('closed', () => {
         stopBackendServer();
@@ -133,7 +140,7 @@ function createWindow() {
 app.whenReady().then(() => {
     // Start the backend server first
     startBackendServer();
-    
+
     // Wait a moment for the server to start, then create the window
     setTimeout(() => {
         createWindow();

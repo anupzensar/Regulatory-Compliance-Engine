@@ -8,6 +8,7 @@ from .banking_service import BankingService
 from .practice_play_service import PracticePlayService
 from .max_bet_limit_service import MaxBetLimitService
 from .detect_service import DetectService
+from .regression_service import RegressionService
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,8 @@ class TestServiceFactory:
             BankingService(),
             PracticePlayService(),
             MaxBetLimitService(),
-            DetectService()
+            DetectService(),
+            RegressionService()  # Register RegressionService here
         ]
         
         for service in services:
