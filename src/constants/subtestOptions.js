@@ -42,7 +42,7 @@ export const TEST_OPTIONS = [
   },
   {
     id: 7,
-    label: 'Regression Testing',
+    label: 'Regression',
     iconName: 'Maximize2',
     iconColor: 'text-green-400',
     description: 'Run regression tests to ensure compliance with previous standards'
