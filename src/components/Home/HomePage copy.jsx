@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   ShieldCheck,
   RotateCcw,
@@ -15,15 +15,34 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 
+const normalizeUrl = (raw) => {
+  let url = raw.trim();
+  if (!url) return '';
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+  return url;
+};
+
 const HomePage = () => {
   const [gameUrl, setGameUrl] = useState('');
-  const [testType, setTestType] = useState("Select a test type");
+  const [testType, setTestType] = useState('Select a test type');
   const [urlError, setUrlError] = useState('');
   const [selectedSubTests, setSelectedSubTests] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState(null);
+  const toastTimeoutRef = useRef(null);
 
   const { isLoading, error, result, runTest, clearError } = useComplianceTest();
+
+  // Cleanup toast timer on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Helper function to render icons
   const getIcon = (iconName, iconColor) => {
@@ -58,16 +77,19 @@ const HomePage = () => {
 
   const showToast = useCallback((type, message) => {
     setToast({ type, message });
-    setTimeout(() => setToast(null), 5000); // Auto-dismiss after 5 seconds
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimeoutRef.current = null;
+    }, 5000); // Auto-dismiss after 5 seconds
   }, []);
 
   // Handler to open the game URL in a new tab
   const handleOpenUrl = useCallback(() => {
-    if (gameUrl.trim()) {
-      let urlToOpen = gameUrl.trim();
-      if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
-        urlToOpen = 'https://' + urlToOpen;
-      }
+    const urlToOpen = normalizeUrl(gameUrl);
+    if (urlToOpen) {
       window.open(urlToOpen, '_blank', 'noopener,noreferrer');
       showToast('info', 'URL opened in new tab');
     } else {
@@ -104,27 +126,38 @@ const HomePage = () => {
       return;
     }
 
+    const urlToOpen = normalizeUrl(gameUrl);
+
     try {
-      let urlToOpen = gameUrl.trim();
-      if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
-        urlToOpen = 'https://' + urlToOpen;
+      if (urlToOpen) {
+        window.open(urlToOpen, '_blank', 'noopener,noreferrer');
       }
-      window.open(urlToOpen, '_blank', 'noopener,noreferrer');
 
       const response = await runTest(gameUrl, testType, selectedSubTests);
       showToast('success', `Test submitted successfully! Test ID: ${response.test_id}`);
       console.log(selectedSubTests);
-
-      const flow = [0, 1, 15, 3, 1, 15, 7, 10, 11];
-      await window.electronAPI.runComplianceFlow({ url: gameUrl, flow });
-      showToast('success', 'Compliance flow completed!');
     } catch (err) {
-      showToast('error', err.message || 'Failed to submit test');
+      showToast('error', err?.message || 'Failed to submit test');
+      return; // if runTest failed, skip flow
+    }
+
+    // Run compliance flow separately; failure here shouldn't undo previous success
+    try {
+      if (window?.electronAPI?.runComplianceFlow) {
+        await window.electronAPI.runComplianceFlow({ url: gameUrl });
+        showToast('success', 'Compliance flow completed!');
+      } else {
+        // Optional: warn if electronAPI not available
+        showToast('info', 'Compliance flow not executed (electronAPI unavailable).');
+      }
+    } catch (err) {
+      showToast('error', `Compliance flow error: ${err?.message || 'unknown error'}`);
     }
   };
 
   // Get all sub-test types for the current test type
-  const allSubTestOptions = TEST_OPTIONS.find((opt) => opt.label === testType)?.test_types || [];
+  const allSubTestOptions =
+    TEST_OPTIONS.find((opt) => opt.label === testType)?.test_types || [];
 
   return (
     <div className="fixed inset-0 overflow-hidden w-screen h-screen bg-gray-900 text-white flex flex-col items-center justify-center px-4">
@@ -188,7 +221,9 @@ const HomePage = () => {
         {/* Selected Sub-tests Display */}
         {selectedSubTests.length > 0 && (
           <div className="mb-4">
-            <h3 className="block mb-1 text-sm font-medium text-blue-300">Selected Sub-tests:</h3>
+            <h3 className="block mb-1 text-sm font-medium text-blue-300">
+              Selected Sub-tests:
+            </h3>
             <div className="flex flex-wrap gap-2 mt-2">
               {selectedSubTests.map((sub, idx) => (
                 <span
@@ -229,7 +264,6 @@ const HomePage = () => {
 
         {/* Action Buttons */}
         <div className="text-center mt-4 space-y-3">
-          {/* This is a button to open the game URL in a new tab. Onclick logic written above in handleOpenUrl */}
           <button
             type="button"
             onClick={handleOpenUrl}

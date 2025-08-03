@@ -202,6 +202,7 @@ async def run_test(request: RunTestRequest):
 @app.post("/run-test-step", response_model=StepResponse)
 async def run_test_step(req: StepRequest):
     exec_ctx = executions.get(req.test_id)
+    print(exec_ctx)
     if not exec_ctx:
         raise HTTPException(status_code=404, detail="Unknown test_id")
 

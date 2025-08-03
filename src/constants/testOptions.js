@@ -68,8 +68,8 @@ export const TEST_OPTIONS = [
   },
   {
     id: 7,
-    label: 'Regression Testing',
-    test_types: ["Regression Testing"],
+    label: 'Regression',
+    test_types: ["Regression"],
     iconName: 'Maximize2',
     iconColor: 'text-green-400',
     description: 'Run regression tests to ensure compliance with previous standards'

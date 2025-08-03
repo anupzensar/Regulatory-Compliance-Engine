@@ -4,8 +4,8 @@ const isElectron = () => {
   return typeof window !== 'undefined' && window.api && window.api.getBackendUrl;
 };
 
-const API_BASE_URL = isElectron() 
-  ? window.api.getBackendUrl() 
+const API_BASE_URL = isElectron()
+  ? window.api.getBackendUrl()
   : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:7000');
 
 // API client with proper error handling
@@ -19,6 +19,23 @@ const apiClient = axios.create({
   },
 });
 
+// ----------------- EDIT: centralized error handler -----------------
+function handleApiError(error) {
+  if (error.response?.status === 400) {
+    throw new Error(error.response.data.detail || 'Invalid request');
+  } else if (error.response?.status >= 500) {
+    throw new Error('Server error. Please try again later.');
+  } else if (error.code === 'ECONNABORTED') {
+    throw new Error('Request timeout. Please check your connection.');
+  } else if (error.response) {
+    // other HTTP errors
+    throw new Error(error.response.data?.detail || `Request failed with status ${error.response.status}`);
+  } else {
+    throw new Error('Network error. Please check your connection.');
+  }
+}
+// ------------------------------------------------------------------
+
 // Request interceptor for logging
 apiClient.interceptors.request.use(
   (config) => {
@@ -31,7 +48,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor for logging (but error shaping is done in wrapper)
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -40,19 +57,47 @@ apiClient.interceptors.response.use(
   }
 );
 
-// API functions
+// ----------------- EDIT: new semantic wrappers -----------------
 
-// Check backend status (useful for Electron)
-export const checkBackendStatus = async () => {
+/**
+ * Starts a regression (or compliance) test.
+ * Returns backend payload: expected to contain test_id and next_step.
+ */
+export const startRegressionTest = async (gameUrl) => {
   try {
-    const response = await apiClient.get('/');
-    return response.data;
-  } catch (error) {
-    console.error('Backend not available:', error.message);
-    throw new Error('Backend server is not running or not accessible');
+    const response = await apiClient.post('/run-test', {
+      gameUrl,
+      testType: 'Regression',
+    });
+    return response.data; // { test_id, next_step, ... }
+  } catch (err) {
+    handleApiError(err);
   }
 };
 
+/**
+ * Submits a single step of the test flow.
+ * Expects:
+ *  - test_id: string
+ *  - class_id: number
+ *  - screenshot: string (data URI)
+ *  - action_result: object (e.g., { clicked: boolean, ... })
+ */
+export const submitTestStep = async ({ test_id, class_id, screenshot, action_result }) => {
+  try {
+    const response = await apiClient.post('/run-test-step', {
+      test_id,
+      class_id,
+      screenshot,
+      action_result,
+    });
+    return response.data; // contains step_result, next_step or final result
+  } catch (err) {
+    handleApiError(err);
+  }
+};
+
+// ----------------- EDIT: preserve / adapt legacy function -----------------
 export const submitComplianceTest = async (gameUrl, testType) => {
   try {
     const response = await apiClient.post('/run-test', {
@@ -61,24 +106,8 @@ export const submitComplianceTest = async (gameUrl, testType) => {
     });
     return response.data;
   } catch (error) {
-    if (error.response?.status === 400) {
-      throw new Error(error.response.data.detail || 'Invalid request');
-    } else if (error.response?.status >= 500) {
-      throw new Error('Server error. Please try again later.');
-    } else if (error.code === 'ECONNABORTED') {
-      throw new Error('Request timeout. Please check your connection.');
-    } else {
-      throw new Error('Network error. Please check your connection.');
-    }
+    handleApiError(error);
   }
-};
-
-export const launchRegression = async (url, headless = true) => {
-  const response = await axios.get('http://localhost:7000/get-regression', {
-    url,
-    headless,
-  });
-  return response.data;
 };
 
 export default apiClient;

@@ -5,11 +5,8 @@ python-multipart==0.0.6
 ultralytics==8.0.196
 pillow==10.0.1
 numpy==1.24.3
-pillow==10.0.1
 playwright==1.49.1
 python-dotenv==1.0.1
 requests==2.32.3
 streamlit==1.41.1
-ultralytics
-numpy
 python-docx

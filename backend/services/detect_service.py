@@ -21,9 +21,10 @@ class DetectService(BaseTestService):
     """Service for detecting UI elements and returning click coordinates"""
     
     def __init__(self):
+        logger.info("DetectService instance created")  # Add this line
         super().__init__("UI Element Detection")
         self.model = None
-        self.model_path = os.path.join(os.path.dirname(__file__), "..", "models", "best.pt")
+        self.model_path = os.path.join(os.path.dirname(__file__), "..", "models", "best copy.pt")
         self.classes = self._load_classes()
         self._load_model()
     
@@ -57,7 +58,7 @@ class DetectService(BaseTestService):
             else:
                 logger.warning(f"YOLO model not found at {self.model_path}")
         except Exception as e:
-            logger.error(f"Failed to load YOLO model: {str(e)}")
+            logger.error(f"Failed to load YOLO model: {e}")
             self.model = None
     
     def validate_request(self, request: TestExecutionRequest) -> bool:
@@ -147,9 +148,11 @@ class DetectService(BaseTestService):
         try:
             # Convert PIL Image to numpy array
             image_array = np.array(image)
+            print(image_array)
             
             # Run inference
             results = self.model(image_array)
+            print(results)
             
             # Process results
             detections = self._process_yolo_detections(results)
