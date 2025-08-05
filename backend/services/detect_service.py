@@ -148,7 +148,7 @@ class DetectService(BaseTestService):
         try:
             # Convert PIL Image to numpy array
             image_array = np.array(image)
-            print(image_array)
+            # print(image_array)
             
             # Run inference
             results = self.model(image_array)

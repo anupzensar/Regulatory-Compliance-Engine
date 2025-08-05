@@ -91,7 +91,7 @@ contextBridge.exposeInMainWorld('api', {
   // Orchestrator primitives
   openTestWindow: (url) => ipcRenderer.invoke('open-test-window', url),
   captureScreenshot: () => ipcRenderer.invoke('capture-screenshot'),
-  performClick: (x, y) => ipcRenderer.invoke('perform-click', x, y),
+  performClick: (classId, x, y) => ipcRenderer.invoke('perform-click', classId, x, y),
   clickInDOM: (rawX, rawY, options) => ipcRenderer.invoke('click-in-dom', rawX, rawY, options),
   getTestWindowMetrics: () => ipcRenderer.invoke('get-test-window-metrics'),
 

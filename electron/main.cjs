@@ -92,36 +92,71 @@ ipcMain.handle('capture-screenshot', async () => {
 });
 
 /**
- * Performs a synthetic low-level click at (x,y) in the test window.
+ * Performs a synthetic click at (x,y) in the test window.
+ * If classId is 0, uses canvas pointer event simulation.
+ * Otherwise, uses low-level sendInputEvent.
  * Adds a 10-second delay after the click event.
  */
-ipcMain.handle('perform-click', async (event, x, y) => {
+ipcMain.handle('perform-click', async (event, classId, x, y) => {
     if (!testWindow || testWindow.isDestroyed()) {
         throw new Error('Test window is not available');
     }
 
     testWindow.focus();
 
-    try {
-        // Move + mouse down + mouse up to simulate click
-        testWindow.webContents.sendInputEvent({ type: 'mouseMove', x, y });
-        testWindow.webContents.sendInputEvent({
-            type: 'mouseDown',
-            x,
-            y,
-            button: 'left',
-            clickCount: 1,
-        });
-        testWindow.webContents.sendInputEvent({
-            type: 'mouseUp',
-            x,
-            y,
-            button: 'left',
-            clickCount: 1,
-        });
-    } catch (err) {
-        console.error('Low-level perform-click failed:', err);
-        throw err;
+    if (classId === 0) {
+        // --- Simulate pointer events on canvas at (x, y) ---
+        try {
+            const js = `
+                (function() {
+                    const canvas = document.querySelector('canvas');
+                    if (!canvas) return { success: false, error: 'No canvas found' };
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = rect.left + ${x};
+                    const clientY = rect.top + ${y};
+                    ['pointerdown', 'pointerup', 'click'].forEach(type => {
+                        canvas.dispatchEvent(new PointerEvent(type, {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window,
+                            clientX,
+                            clientY,
+                            pointerType: 'mouse',
+                            isPrimary: true
+                        }));
+                    });
+                    return { success: true };
+                })();
+            `;
+            const result = await testWindow.webContents.executeJavaScript(js, true);
+            if (!result?.success) {
+                console.warn('Canvas pointer event simulation failed:', result?.error);
+            }
+        } catch (err) {
+            console.error('Canvas pointer event simulation error:', err);
+        }
+    } else {
+        // --- Low-level click ---
+        try {
+            testWindow.webContents.sendInputEvent({ type: 'mouseMove', x, y });
+            testWindow.webContents.sendInputEvent({
+                type: 'mouseDown',
+                x,
+                y,
+                button: 'left',
+                clickCount: 1,
+            });
+            testWindow.webContents.sendInputEvent({
+                type: 'mouseUp',
+                x,
+                y,
+                button: 'left',
+                clickCount: 1,
+            });
+        } catch (err) {
+            console.error('Low-level perform-click failed:', err);
+            throw err;
+        }
     }
 
     // Wait to allow UI transition (modal close / next screen)

@@ -97,7 +97,7 @@ export const useStepwiseTest = () => {
             }
 
             if (stepResult.passed && coords && window.api && window.api.performClick) {
-                await window.api.performClick(coords.x, coords.y);
+                await window.api.performClick(classId,coords.x, coords.y);
             }
 
             return stepResp;
