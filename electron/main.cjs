@@ -10,94 +10,6 @@ let backendProcess = null;
 let testWindow = null; // Controlled window used for screenshot / click orchestration
 // ----------------------------------------------------------------------
 
-// Function to start the Python backend server
-// function startBackendServer() {
-//     const backendPath = path.join(__dirname, '..', 'backend');
-//     const pythonScript = path.join(backendPath, 'app.py');
-//     const venvPath = path.join(backendPath, 'venv');
-
-//     console.log('Starting Python backend server...');
-//     console.log('Backend path:', backendPath);
-//     console.log('Python script:', pythonScript);
-
-//     let pythonCmd = 'python';
-//     let args = [pythonScript];
-
-//     // Check if virtual environment exists and use it
-//     if (fs.existsSync(venvPath)) {
-//         const venvPython = path.join(venvPath, 'Scripts', 'python.exe');
-//         if (fs.existsSync(venvPython)) {
-//             pythonCmd = venvPython;
-//             console.log('Using virtual environment Python:', venvPython);
-//         }
-//     }
-
-//     // Try different Python commands if venv doesn't work
-//     const pythonCommands = [pythonCmd, 'python', 'python3', 'py'];
-
-//     let started = false;
-//     for (const cmd of pythonCommands) {
-//         try {
-//             console.log(`Attempting to start backend with: ${cmd}`);
-//             backendProcess = spawn(cmd, args, {
-//                 cwd: backendPath,
-//                 stdio: ['pipe', 'pipe', 'pipe'],
-//                 shell: process.platform === 'win32' // Use shell on Windows
-//             });
-
-//             backendProcess.stdout.on('data', (data) => {
-//                 const output = data.toString();
-//                 console.log(`Backend stdout: ${output}`);
-//                 // Look for successful startup message
-//                 if (output.includes('Uvicorn running on')) {
-//                     console.log('Backend server started successfully!');
-//                 }
-//             });
-
-//             backendProcess.stderr.on('data', (data) => {
-//                 const error = data.toString();
-//                 console.error(`Backend stderr: ${error}`);
-//                 // Only log actual errors, not info messages
-//                 if (!error.includes('INFO') && !error.includes('WARNING')) {
-//                     console.error('Backend error:', error);
-//                 }
-//             });
-
-//             backendProcess.on('close', (code) => {
-//                 console.log(`Backend process exited with code ${code}`);
-//                 backendProcess = null;
-//             });
-
-//             backendProcess.on('error', (err) => {
-//                 console.error('Failed to start backend process:', err);
-//                 backendProcess = null;
-//             });
-
-//             console.log(`Backend server starting with ${cmd}, PID: ${backendProcess.pid}`);
-//             started = true;
-//             break;
-//         } catch (error) {
-//             console.error(`Failed to start with ${cmd}:`, error);
-//             // Continue to next command
-//         }
-//     }
-
-//     if (!started) {
-//         console.error('Failed to start Python backend server with any Python command');
-//         console.error('Please ensure Python is installed and the backend dependencies are installed');
-//         console.error('Run: pip install -r backend/requirements.txt');
-//     }
-// }
-
-// Function to stop the backend server
-// function stopBackendServer() {
-//     if (backendProcess) {
-//         console.log('Stopping Python backend server...');
-//         backendProcess.kill();
-//         backendProcess = null;
-//     }
-// }
-
 // Function to create the main application window
 function createWindow() {
     const mainWindow = new BrowserWindow({
@@ -111,23 +23,18 @@ function createWindow() {
         },
     });
 
-    // Check if built files exist, otherwise load from dev server
     const builtIndexPath = path.join(__dirname, '..', 'dist', 'index.html');
 
     if (fs.existsSync(builtIndexPath)) {
-        // Load the built application (production)
         mainWindow.loadFile(builtIndexPath);
     } else {
-        // Load from dev server (development)
         mainWindow.loadURL('http://localhost:5173');
     }
 
-    // Open the DevTools for debugging
     // mainWindow.webContents.openDevTools();
 
-    // Handle window closed event
     mainWindow.on('closed', () => {
-        stopBackendServer();
+        // stopBackendServer(); // if you're re-enabling backend logic
     });
 }
 
@@ -141,7 +48,6 @@ ipcMain.handle('open-test-window', async (event, url) => {
     if (testWindow && !testWindow.isDestroyed()) {
         testWindow.loadURL(url);
         testWindow.focus();
-        // Wait 20 seconds to ensure game loads completely
         await new Promise(resolve => setTimeout(resolve, 20000));
         return { success: true, reused: true };
     }
@@ -159,15 +65,15 @@ ipcMain.handle('open-test-window', async (event, url) => {
 
     testWindow.loadURL(url);
 
-    // Optional: open devtools for the test window for debugging if needed
     // testWindow.webContents.openDevTools();
 
     testWindow.on('closed', () => {
         testWindow = null;
     });
 
-    // Wait 20 seconds to ensure game loads completely
+    // Give the app time to fully render including modals
     await new Promise(resolve => setTimeout(resolve, 20000));
+    testWindow.focus();
     return { success: true, reused: false };
 });
 
@@ -179,65 +85,172 @@ ipcMain.handle('capture-screenshot', async () => {
     if (!testWindow || testWindow.isDestroyed()) {
         throw new Error('Test window is not available');
     }
-    // Optionally wait for the content to finish loading if caller desires
+    testWindow.focus();
     const image = await testWindow.webContents.capturePage();
     const pngBuffer = image.toPNG();
     return pngBuffer.toString('base64');
 });
 
 /**
- * Performs a synthetic click at (x,y) in the test window.
+ * Performs a synthetic low-level click at (x,y) in the test window.
  * Adds a 10-second delay after the click event.
  */
 ipcMain.handle('perform-click', async (event, x, y) => {
     if (!testWindow || testWindow.isDestroyed()) {
         throw new Error('Test window is not available');
     }
-    // Move + mouse down + mouse up to simulate click
-    testWindow.webContents.sendInputEvent({ type: 'mouseMove', x, y });
-    testWindow.webContents.sendInputEvent({
-        type: 'mouseDown',
-        x,
-        y,
-        button: 'left',
-        clickCount: 1,
-    });
-    testWindow.webContents.sendInputEvent({
-        type: 'mouseUp',
-        x,
-        y,
-        button: 'left',
-        clickCount: 1,
-    });
-    // Wait 10 seconds to allow next screen to appear
+
+    testWindow.focus();
+
+    try {
+        // Move + mouse down + mouse up to simulate click
+        testWindow.webContents.sendInputEvent({ type: 'mouseMove', x, y });
+        testWindow.webContents.sendInputEvent({
+            type: 'mouseDown',
+            x,
+            y,
+            button: 'left',
+            clickCount: 1,
+        });
+        testWindow.webContents.sendInputEvent({
+            type: 'mouseUp',
+            x,
+            y,
+            button: 'left',
+            clickCount: 1,
+        });
+    } catch (err) {
+        console.error('Low-level perform-click failed:', err);
+        throw err;
+    }
+
+    // Wait to allow UI transition (modal close / next screen)
     await new Promise(resolve => setTimeout(resolve, 10000));
     return { success: true };
 });
 
 /**
- * (Optional enhancement) Expose test window info like size / DPR if needed by renderer.
+ * Attempts an in-DOM click by executing a page-level click dispatcher function.
+ * Falls back to low-level sendInputEvent if the in-page function is absent or fails.
+ *
+ * Expected in-page function signature:
+ *   // exposed globally (e.g., via preload) as window.clickAtXY
+ *   // returns a result object { success: boolean, method: string, ... }
+ *   clickAtXY(rawX, rawY, options)
  */
-ipcMain.handle('get-test-window-metrics', () => {
+ipcMain.handle('click-in-dom', async (event, rawX, rawY, options = {}) => {
+    if (!testWindow || testWindow.isDestroyed()) {
+        throw new Error('Test window is not available');
+    }
+    testWindow.focus();
+
+    try {
+        // Try the in-page dispatcher first
+        const serializedOptions = JSON.stringify(options);
+        const js = `
+            (async () => {
+                if (typeof window.clickAtXY === 'function') {
+                    try {
+                        return await window.clickAtXY(${rawX}, ${rawY}, ${serializedOptions});
+                    } catch (e) {
+                        return { success: false, error: 'clickAtXY threw: ' + e.toString() };
+                    }
+                } else if (typeof window.api?.clickAt === 'function') {
+                    // If you exposed via api.clickAt instead
+                    try {
+                        return await window.api.clickAt(${rawX}, ${rawY}, ${serializedOptions});
+                    } catch (e) {
+                        return { success: false, error: 'api.clickAt threw: ' + e.toString() };
+                    }
+                } else {
+                    return { success: false, error: 'No in-page click dispatcher found' };
+                }
+            })();
+        `;
+        const result = await testWindow.webContents.executeJavaScript(js, true);
+
+        if (result && result.success) {
+            // Give UI time to respond
+            await new Promise(resolve => setTimeout(resolve, 500)); // shorter because in-page click is immediate
+            return { success: true, via: 'in-dom', detail: result };
+        } else {
+            console.warn('In-DOM click failed or not available, falling back to low-level. Detail:', result);
+            // Fallback to low-level click using same coords
+            testWindow.webContents.sendInputEvent({ type: 'mouseMove', x: rawX, y: rawY });
+            testWindow.webContents.sendInputEvent({
+                type: 'mouseDown',
+                x: rawX,
+                y: rawY,
+                button: 'left',
+                clickCount: 1,
+            });
+            testWindow.webContents.sendInputEvent({
+                type: 'mouseUp',
+                x: rawX,
+                y: rawY,
+                button: 'left',
+                clickCount: 1,
+            });
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            return { success: true, via: 'fallback-low-level', detail: result };
+        }
+    } catch (err) {
+        console.error('click-in-dom handler error:', err);
+        // As last resort, do low-level click
+        try {
+            testWindow.webContents.sendInputEvent({ type: 'mouseMove', x: rawX, y: rawY });
+            testWindow.webContents.sendInputEvent({
+                type: 'mouseDown',
+                x: rawX,
+                y: rawY,
+                button: 'left',
+                clickCount: 1,
+            });
+            testWindow.webContents.sendInputEvent({
+                type: 'mouseUp',
+                x: rawX,
+                y: rawY,
+                button: 'left',
+                clickCount: 1,
+            });
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            return { success: true, via: 'fallback-on-error', error: err.toString() };
+        } catch (fallbackErr) {
+            console.error('Fallback low-level click also failed:', fallbackErr);
+            throw fallbackErr;
+        }
+    }
+});
+
+/**
+ * Returns metrics about the test window including size, approximate zoom, and devicePixelRatio.
+ */
+ipcMain.handle('get-test-window-metrics', async () => {
     if (!testWindow || testWindow.isDestroyed()) {
         return null;
     }
+
     const [width, height] = testWindow.getSize();
-    const scaleFactor = testWindow.webContents.getZoomFactor(); // approximate zoom
-    return { width, height, scaleFactor };
+    const zoomFactor = testWindow.webContents.getZoomFactor();
+
+    // Attempt to get devicePixelRatio from the page context
+    let devicePixelRatio = 1;
+    try {
+        const dpr = await testWindow.webContents.executeJavaScript('window.devicePixelRatio', true);
+        if (typeof dpr === 'number' && !isNaN(dpr)) {
+            devicePixelRatio = dpr;
+        }
+    } catch (e) {
+        console.warn('Failed to get devicePixelRatio from renderer, defaulting to 1:', e);
+    }
+
+    return { width, height, zoomFactor, devicePixelRatio };
 });
+
 // ------------------------------------------------------------------------------------------------------------------
 
 // Event when the application is ready
 app.whenReady().then(() => {
-    // Start the backend server first
-    // startBackendServer();
-
-    // Wait a moment for the server to start, then create the window
-    // setTimeout(() => {
-    //     createWindow();
-    // }, 2000);
-
-    // Replace with just creating the window:
     createWindow();
 });
 
@@ -255,7 +268,7 @@ app.on('activate', () => {
     }
 });
 
-// IPC handlers
+// IPC handlers (example placeholder for backend status if needed)
 ipcMain.handle('check-backend-status', async () => {
     return backendProcess !== null && !backendProcess.killed;
 });

@@ -18,7 +18,7 @@ import TestProgressPanel from '../components/TestProgressPanel'; // <-- EDIT: ne
 
 // Flow definitions for known test types (could eventually come from backend)
 const FLOW_MAP = {
-  Regression: [0, 1, 15, 3, 1, 15, 7, 10, 11],
+  Regression: [0, 1, 1, 15, 7, 10, 11],
 };
 
 const normalizeUrl = (raw) => {

@@ -167,6 +167,9 @@ const TestProgressPanel = ({
                                     )}
                                     {/* Retry / override actions */}
                                     <div className="flex gap-2 mt-2">
+                                        {/*
+                                        // Retry button: Allows user to retry detection for this classId if step failed
+                                        // Calls onRetryStep(classId) when clicked
                                         {!step.passed && onRetryStep && (
                                             <button
                                                 onClick={() => onRetryStep(classId)}
@@ -175,6 +178,10 @@ const TestProgressPanel = ({
                                                 <RefreshCcw className="w-3 h-3" /> Retry
                                             </button>
                                         )}
+                                        */}
+                                        {/*
+                                        // Override Click button: Allows user to manually trigger a click at detected coordinates
+                                        // Calls onOverrideClick(classId, x, y) when clicked, using detection's click_x and click_y (or 0 if not available)
                                         {onOverrideClick && (
                                             <button
                                                 onClick={() => {
@@ -187,6 +194,7 @@ const TestProgressPanel = ({
                                                 Override Click
                                             </button>
                                         )}
+                                        */}
                                     </div>
                                 </div>
                             )}
