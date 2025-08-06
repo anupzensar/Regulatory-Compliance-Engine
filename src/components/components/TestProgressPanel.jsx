@@ -43,24 +43,45 @@ const TestProgressPanel = ({
     onAbort,
     onOverrideClick,
 }) => {
-    // For each step in flow, find the nth occurrence in history
+    // For each step in flow, find the latest occurrence in history (for retries)
     const stepHistory = flow.map((classId, idx) => {
         let occurrence = 0;
         for (let i = 0; i < idx; i++) {
             if (flow[i] === classId) occurrence++;
         }
-        let found = null;
+        // Find all matching attempts for this step
         let count = 0;
-        for (const step of history) {
+        const attempts = history.filter(step => {
             if (step.class_id === classId) {
                 if (count === occurrence) {
-                    found = step;
-                    break;
+                    count++;
+                    return true;
                 }
                 count++;
             }
+            return false;
+        });
+        // Show the last attempt (latest result)
+        return attempts.length > 0 ? attempts[attempts.length - 1] : null;
+    });
+
+    // For each step, collect all attempts (for retry info)
+    const stepAttempts = flow.map((classId, idx) => {
+        let occurrence = 0;
+        for (let i = 0; i < idx; i++) {
+            if (flow[i] === classId) occurrence++;
         }
-        return found;
+        let count = 0;
+        return history.filter(step => {
+            if (step.class_id === classId) {
+                if (count === occurrence) {
+                    count++;
+                    return true;
+                }
+                count++;
+            }
+            return false;
+        });
     });
 
     // Find the current step index in flow (by occurrence)
@@ -113,6 +134,7 @@ const TestProgressPanel = ({
             >
                 {flow.map((classId, idx) => {
                     const step = stepHistory[idx];
+                    const attempts = stepAttempts[idx];
                     const isCurrent = idx === currentStepIdx && !(finalResult && finalResult.status);
                     return (
                         <div
@@ -167,6 +189,9 @@ const TestProgressPanel = ({
                                     )}
                                     {/* Retry / override actions */}
                                     <div className="flex gap-2 mt-2">
+                                        {/*
+                                        // Retry button: Allows user to retry detection for this classId if step failed
+                                        // Calls onRetryStep(classId) when clicked
                                         {!step.passed && onRetryStep && (
                                             <button
                                                 onClick={() => onRetryStep(classId)}
@@ -175,6 +200,10 @@ const TestProgressPanel = ({
                                                 <RefreshCcw className="w-3 h-3" /> Retry
                                             </button>
                                         )}
+                                        */}
+                                        {/*
+                                        // Override Click button: Allows user to manually trigger a click at detected coordinates
+                                        // Calls onOverrideClick(classId, x, y) when clicked, using detection's click_x and click_y (or 0 if not available)
                                         {onOverrideClick && (
                                             <button
                                                 onClick={() => {
@@ -187,6 +216,7 @@ const TestProgressPanel = ({
                                                 Override Click
                                             </button>
                                         )}
+                                        */}
                                     </div>
                                 </div>
                             )}
@@ -195,6 +225,23 @@ const TestProgressPanel = ({
                             {!step && isCurrent && (
                                 <div className="text-xs text-gray-300 mt-1">
                                     Waiting for execution of class_id {classId}...
+                                </div>
+                            )}
+
+                            {/* Show retry info if there were multiple attempts */}
+                            {attempts.length > 1 && (
+                                <div className="text-xs text-blue-300 mt-1">
+                                    {attempts.length} attempts:
+                                    <ul className="list-disc ml-4">
+                                        {attempts.map((attempt, i) => (
+                                            <li key={i}>
+                                                {attempt.passed ? 'Passed' : 'Failed'}
+                                                {attempt.detection?.confidence != null && (
+                                                    <> (Confidence: {attempt.detection.confidence.toFixed(2)})</>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
                             )}
                         </div>

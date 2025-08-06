@@ -8,9 +8,9 @@ from .base_service import BaseTestService, TestExecutionRequest, TestExecutionRe
 logger = logging.getLogger(__name__)
 
 # Regression flow as class IDs
-REGRESSION_FLOW: List[int] = [0,1,15,3,1,15,7,10,11]
+REGRESSION_FLOW: List[int] = [0,1,1,15,7,10,11]
 # Confidence threshold for considering a detection as passed
-DEFAULT_CONFIDENCE_THRESHOLD = 0.8
+DEFAULT_CONFIDENCE_THRESHOLD = 0.5
 
 
 def make_stable_test_id(test_type: str, game_url: str, timestamp: float) -> str:
