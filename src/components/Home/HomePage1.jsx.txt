@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-react';
 import { TEST_OPTIONS } from '../../constants/testOptions';
+import { GOVERNMENT_POLICIES, TEST_SUITES } from '../../constants/testOptions';
 import { useStepwiseTest } from '../../hooks/useStepwiseTest';
 import Toast from '../ui/Toast';
 import LoadingSpinner from '../ui/LoadingSpinner';
@@ -229,7 +230,7 @@ const HomePage = () => {
 
   // Get all sub-test types for the current test type
   const allSubTestOptions =
-    TEST_OPTIONS.find((opt) => opt.label === testType)?.test_types || [];
+    TEST_SUITES.find((opt) => opt.label === testType)?.test_types || [];
 
   return (
     <div className="fixed inset-0 overflow-auto w-screen min-h-screen bg-gray-900 text-white flex flex-col items-center justify-start px-4 py-6">
@@ -282,7 +283,7 @@ const HomePage = () => {
                 <option value="Select a test type" disabled>
                   -- Select a test type --
                 </option>
-                {TEST_OPTIONS.map((opt, idx) => (
+                {TEST_SUITES.map((opt, idx) => (
                   <option key={idx} value={opt.label} title={opt.description}>
                     {opt.label}
                   </option>

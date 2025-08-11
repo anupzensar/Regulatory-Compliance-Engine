@@ -14,7 +14,6 @@ async function clickAtXY(rawX, rawY, options = {}) {
   } = options;
 
   const scale = window.devicePixelRatio || 1;
-  // Convert to client coordinates
   const clientX = rawX / scale;
   const clientY = rawY / scale;
 
@@ -37,14 +36,12 @@ async function clickAtXY(rawX, rawY, options = {}) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     const el = document.elementFromPoint(clientX, clientY);
     if (el) {
-      // Direct click
       const success = dispatchClickOnElement(el);
       if (success) {
         return { success: true, method: 'direct', tag: el.tagName, attempt };
       }
     }
 
-    // Try the stacked elements (some overlays might block)
     const stack = document.elementsFromPoint(clientX, clientY);
     for (const candidate of stack) {
       const success = dispatchClickOnElement(candidate);
@@ -53,11 +50,9 @@ async function clickAtXY(rawX, rawY, options = {}) {
       }
     }
 
-    // Wait and retry
     await new Promise(r => setTimeout(r, retryDelay));
   }
 
-  // Fallback to selector if provided
   if (fallbackSelector) {
     const fb = document.querySelector(fallbackSelector);
     if (fb) {
@@ -73,20 +68,13 @@ async function clickAtXY(rawX, rawY, options = {}) {
   return { success: false, reason: 'no clickable target found after retries' };
 }
 
+// ---- Context Bridge Exports ----
 contextBridge.exposeInMainWorld('api', {
-  // Existing utilities
-  sendMessage: (channel, data) => {
-    ipcRenderer.send(channel, data);
-  },
-  onMessage: (channel, func) => {
-    ipcRenderer.on(channel, (event, ...args) => func(...args));
-  },
-  checkBackendStatus: () => {
-    return ipcRenderer.invoke('check-backend-status');
-  },
-  getBackendUrl: () => {
-    return 'http://localhost:7000';
-  },
+  // Backend & messaging utilities
+  sendMessage: (channel, data) => ipcRenderer.send(channel, data),
+  onMessage: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args)),
+  checkBackendStatus: () => ipcRenderer.invoke('check-backend-status'),
+  getBackendUrl: () => 'http://localhost:7000',
 
   // Orchestrator primitives
   openTestWindow: (url) => ipcRenderer.invoke('open-test-window', url),
@@ -95,9 +83,10 @@ contextBridge.exposeInMainWorld('api', {
   clickInDOM: (rawX, rawY, options) => ipcRenderer.invoke('click-in-dom', rawX, rawY, options),
   getTestWindowMetrics: () => ipcRenderer.invoke('get-test-window-metrics'),
 
-  // In-page helpers (runs in isolated world but can access DOM)
+  // In-page click simulation
   clickAt: (x, y, options) => clickAtXY(x, y, options),
 
+  // DOM inspection utilities
   isElementPresent: (selector) => {
     try {
       return !!document.querySelector(selector);
@@ -115,7 +104,6 @@ contextBridge.exposeInMainWorld('api', {
     }
   },
 
-  // Debug: returns the topmost element at a coordinate (after DPR conversion)
   elementAtPoint: (rawX, rawY) => {
     const scale = window.devicePixelRatio || 1;
     const clientX = rawX / scale;
@@ -129,4 +117,25 @@ contextBridge.exposeInMainWorld('api', {
       boundingClientRect: el.getBoundingClientRect?.(),
     };
   },
+});
+
+// ---- Expose canvas-ready notifier for main process ----
+contextBridge.exposeInMainWorld('electronAPI', {
+  notifyCanvasReady: () => ipcRenderer.send('canvas-ready'),
+});
+
+// ---- Wait for canvas and notify main process on load ----
+window.addEventListener('load', () => {
+  const checkCanvasReady = () => {
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      console.log('✅ Canvas detected, notifying main process');
+      window.electronAPI.notifyCanvasReady();
+    } else {
+      console.log('⏳ Waiting for canvas...');
+      setTimeout(checkCanvasReady, 500);
+    }
+  };
+
+  checkCanvasReady();
 });
