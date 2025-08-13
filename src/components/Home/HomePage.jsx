@@ -9,9 +9,9 @@ import {
   Square,
 } from 'lucide-react';
 import { GOVERNMENT_POLICIES, TEST_SUITES } from '../../constants/testOptions';
-import { useStepwiseTest } from '../../hooks/useStepwiseTest';
 import Toast from '../ui/Toast';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import {runTest} from '../../hooks/useComplianceTest';
 
 const normalizeUrl = (raw) => {
   let url = raw.trim();
@@ -31,16 +31,7 @@ const HomePage = () => {
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
 
-  const {
-    run,
-    isRunning,
-    currentClassId,
-    history,
-    finalResult,
-    error: orchestratorError,
-    reset: resetOrchestrator,
-  } = useStepwiseTest();
-
+  
   // Cleanup toast timer on unmount
   useEffect(() => {
     return () => {
@@ -131,21 +122,25 @@ const HomePage = () => {
         window.open(urlToOpen, '_blank', 'noopener,noreferrer');
       }
 
-      // Run the test
-      await run(
-        { gameUrl, testType: selectedTestSuite },
-        ({ step_result, next_step, status }) => {
-          if (step_result.passed) {
-            showToast(
-              'success',
-              `Class ID ${step_result.class_id} passed (confidence: ${step_result.detection?.confidence?.toFixed(2) || 'N/A'})`
-            );
-          } else {
-            showToast('error', `Class ID ${step_result.class_id} failed, retrying if allowed`);
-          }
-        }
-      );
-      showToast('success', 'Test flow complete');
+      // // Run the test
+      // await run(
+      //   { gameUrl, testType: selectedTestSuite },
+      //   ({ step_result, next_step, status }) => {
+      //     if (step_result.passed) {
+      //       showToast(
+      //         'success',
+      //         `Class ID ${step_result.class_id} passed (confidence: ${step_result.detection?.confidence?.toFixed(2) || 'N/A'})`
+      //       );
+      //     } else {
+      //       showToast('error', `Class ID ${step_result.class_id} failed, retrying if allowed`);
+      //     }
+      //   }
+      // );
+
+      const response = await runTest(gameUrl, selectedPolicy, selectedTestSuite, selectedTestCases);
+      showToast('success', `Test submitted successfully! ${response}`);
+
+
     } catch (err) {
       showToast('error', err.message || 'Test failed');
     }

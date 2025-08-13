@@ -76,7 +76,6 @@ contextBridge.exposeInMainWorld('api', {
   checkBackendStatus: () => ipcRenderer.invoke('check-backend-status'),
   getBackendUrl: () => 'http://localhost:7000',
 
-  // Orchestrator primitives
   openTestWindow: (url) => ipcRenderer.invoke('open-test-window', url),
   captureScreenshot: () => ipcRenderer.invoke('capture-screenshot'),
   performClick: (classId, x, y) => ipcRenderer.invoke('perform-click', classId, x, y),
