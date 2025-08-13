@@ -15,6 +15,7 @@ class TestExecutionResponse(BaseModel):
     message: str
     test_id: str
     execution_time: float = 0.0
+    test_flow: Dict[str, Any] = {}
     results: Dict[str, Any] = {}
 
 class BaseTestService(ABC):
