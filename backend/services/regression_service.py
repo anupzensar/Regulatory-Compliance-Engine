@@ -45,6 +45,10 @@ class RegressionService(BaseTestService):
             execution_time = time.time() - start_time
             test_id = make_stable_test_id(self.test_type, request.game_url, start_time)
 
+            
+            dummy_results = {}
+
+            
             return TestExecutionResponse(
                 status="success",
                 message=f"Regression test completed successfully for URL: {request.game_url}",

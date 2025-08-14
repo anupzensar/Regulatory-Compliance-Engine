@@ -9,14 +9,15 @@ const isElectron = () =>
   typeof window.api.getBackendUrl === 'function';
 
 // Base URL (Electron → from preload, Browser → from env)
+// Base URL (Electron → from preload, Browser → from env)
 const API_BASE_URL = isElectron()
   ? window.api.getBackendUrl()
-  : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:7000');
+  : (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:7000');
 
 // Axios client
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds
+  timeout: 60000, // increase to 60 seconds for heavier ops
   headers: {
     'Content-Type': 'application/json',
   },
@@ -80,9 +81,8 @@ export const performClick = async (classId, x, y) => {
   }
 };
 
-/**
- * Submit Compliance Test
- */
+
+
 export const submitComplianceTest = async (
   gameUrl,
   testType,
@@ -91,15 +91,36 @@ export const submitComplianceTest = async (
   selectedTestCases
 ) => {
   try {
-    const res = await apiClient.post('/run-test', {
-      gameUrl,
-      testType,
-      selectedPolicy,
-      selectedTestSuite,
-      selectedTestCases,
+    console.log('calling the api');
+    // make gameUrl available to detectService
+    lastGameUrl = gameUrl;
+
+    const res = await apiClient.post('/regression-test' , {
+      url : gameUrl
     });
 
-    run_test(res.data.test_flow);
+    console.log('api response received');
+
+    if (res.data.script) {
+      console.log("📜 Executing backend script...");
+
+      const executeScript = new Function(
+        'isElectron',
+        'detectService',
+        'performClick',
+        'window',
+        `return (async () => { ${res.data.script} })();`
+      );
+
+      const detectServiceBound = async (testType, classID, image_data) =>
+        await detectService(testType, classID, image_data);
+
+      await executeScript(isElectron, detectServiceBound, performClick, window);
+
+      console.log("✅ Script execution finished");
+    } else {
+      console.warn("⚠ No script found in backend response.");
+    }
 
     return res.data;
   } catch (error) {
@@ -115,63 +136,36 @@ export const submitComplianceTest = async (
   }
 };
 
+//  test_execution_request = TestExecutionRequest(
+//             game_url=str(request.gameUrl),
+//             test_type=request.testType,
+//             additional_params={
+//                 "selectedPolicy": request.selectedPolicy,
+//                 "selectedTestSuite": request.selectedTestSuite,
+//                 "selectedTestCases": request.selectedTestCases,
+//                 "class_ids":request.class_id,
+//                 "image_data":request.imageData
+//             },
+            
+//         )
 
-
-
-/**
- * Dummy test runner (replace with real logic)
- */
-const run_test = (testData) => {
-  let image_data = null;
-  let x, y;
-  const dummyTestCase = [
-    { id: 1, step: 'captureSS', params: null },
-    { id: 2, step: 'detectService', params: { testType: 'UI Element Detection', classID: 0 } },
-    { id: 3, step: 'clickService' },
-    { id: 4, step: 'captureSS', params: null },
-    { id: 5, step: 'detectService', params: { testType: 'UI Element Detection', classID: 1 } },
-    { id: 6, step: 'clickService' },
-  ];
-
-  for (const testCase of dummyTestCase) {
-    console.log(`▶ Step ${testCase.id}: ${testCase.step}`, testCase.params || '');
-
-    if (testCase.step === 'captureSS') {
-      if (isElectron()) {
-        image_data = window.api.captureScreenshot();
-      } else {
-        console.log('(Browser) Screenshot capture placeholder');
-      }
-    } else if (testCase.step === 'detectService') {
-      console.log(`Detecting service: ${testCase.params.testType}`);
-      // TODO: Implement detection logic here
-      testType = "UI Element Detection";
-      let response = detectService(testType, testCase.params.classID, image_data);
-      x = response.x || 0;
-      y = response.y || 0;
-      console.log(`Detected service at (${x}, ${y})`);
-      console.log(`Detected service response:`, response);
-
-    } else if (testCase.step === 'clickService') {
-      performClick(testCase.params.classID || 0, x, y);
-    }
-  }
-};
+let lastGameUrl = null;
 
 const detectService = async (testType, classID, image_data) => {
-  // Placeholder for service detection logic
   console.log(`Detecting service for type: ${testType}, classID: ${classID}`);
   try {
-    const res = await apiClient.post('/run-test', {
-      gameUrl,
+    const payload = {
+      gameUrl: lastGameUrl,
       testType,
-      selectedPolicy,
-      selectedTestSuite,
-      selectedTestCases,
-      class_id: classID,
-      imageData: image_data,
-    });
+      additionalParams: {
+        class_ids: Array.isArray(classID) ? classID : [classID],
+        imageData: image_data,
+      },
+    };
 
+    const res = await apiClient.post('/run-test', payload);
+    // return only the data so the script can access response.results.*
+    return res.data;
   } catch (error) {
     if (error.response?.status === 400) {
       throw new Error(error.response.data.detail || 'Invalid request');
@@ -183,10 +177,7 @@ const detectService = async (testType, classID, image_data) => {
       throw new Error('Network error.');
     }
   }
-
-  return { success: true, message: 'Service detected successfully' };
 };
-
 
 
 

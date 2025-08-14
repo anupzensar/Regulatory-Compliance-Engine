@@ -5,7 +5,7 @@ from typing import Any, Dict
 # Now import everything else
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, Field
 import uvicorn
 import logging
 from config import settings
@@ -37,22 +37,23 @@ app.add_middleware(
 class TestRequest(BaseModel):
     gameUrl: HttpUrl
     testType: str
-    selectedPolicy : str = None
-    selectedTestSuite : str = None
-    selectedTestCases: list[str] = None
-    class_id: int = None
-    imageData: str = None
-
-
+    selectedPolicy: str | None = None
+    selectedTestSuite: str | None = None
+    selectedTestCases: list[str] | None = None
+    class_id: int | None = None
+    imageData: str | None = None
+    additional_params: Dict[str, Any] = Field(default_factory=dict, alias='additionalParams')
+    
+    
 class TestResponse(BaseModel):
     status: str
     message: str
     test_id: str = None
-    test_flow: Dict[str, Any] = {}
+    results: Dict[str, Any] = {}
     
 class RegressionRequest(BaseModel):
     url: HttpUrl
-    headless: bool = True
+    # headless: bool = True
 
 @app.get("/", response_model=dict)
 def read_root():
@@ -67,47 +68,171 @@ def get_test_types():
         "count": len(test_service_factory.get_available_test_types())
     }
 
+
+
+@app.post("/regression-test")
+async def run_regression_test(request: RegressionRequest):
+    print(f"Running regression test for URL: {request.url}")
+    print(f'sending request to regression service')
+    return {
+        "script": """
+console.log('Starting regression test script...');
+let image_data = null;
+let x, y;
+
+const getTarget = (resp) => {
+    const ct = resp && resp.results ? resp.results.click_targets : null;
+    if (Array.isArray(ct)) {
+        const t = ct.find(t => t && t.click_x != null && t.click_y != null) || ct[0];
+        return t || {};
+    }
+    return ct || {};
+};
+
+let testType = "UI Element Detection";
+
+// Step 1
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+let response = await detectService(testType, 0, image_data);
+let target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 2
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 1, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 3
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 1, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 4
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 15, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 5
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 7, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 6
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 10, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 7 
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 11, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+"""
+    }
+
+
+
 @app.post("/run-test", response_model=TestResponse)
 async def run_test(request: TestRequest):
     """Submit a compliance test for execution using microservice architecture"""
     try:
-        # Validate test type using the service factory
         if not test_service_factory.is_valid_test_type(request.testType):
             available_types = test_service_factory.get_available_test_types()
             raise HTTPException(
-                status_code=400, 
+                status_code=400,
                 detail=f"Invalid test type. Must be one of: {', '.join(available_types)}"
             )
-        
+
         logger.info(f"Received test request - URL: {request.gameUrl}, Type: {request.testType}")
-        
-        # Create test execution request
+
+        # Merge additional params (support both camelCase and snake_case inputs)
+        merged_params: Dict[str, Any] = dict(request.additional_params or {})
+        if request.selectedPolicy is not None:
+            merged_params["selectedPolicy"] = request.selectedPolicy
+        if request.selectedTestSuite is not None:
+            merged_params["selectedTestSuite"] = request.selectedTestSuite
+        if request.selectedTestCases is not None:
+            merged_params["selectedTestCases"] = request.selectedTestCases
+        # Normalize class_ids
+        if "class_ids" not in merged_params and request.class_id is not None:
+            merged_params["class_ids"] = [request.class_id]
+
+        # Image data may come at top-level or inside additional_params
+        image_data = request.imageData or merged_params.get("imageData")
+
         test_execution_request = TestExecutionRequest(
             game_url=str(request.gameUrl),
             test_type=request.testType,
-            additional_params={
-                "selectedPolicy": request.selectedPolicy,
-                "selectedTestSuite": request.selectedTestSuite,
-                "selectedTestCases": request.selectedTestCases,
-                "class_ids":request.class_id
-            },
-            image_data=request.imageData
+            additional_params=merged_params,
+            image_data=image_data,
         )
-        
-        # Execute test using the appropriate microservice
+
         test_result = await test_service_factory.execute_test(
-            request.testType, 
-            test_execution_request
+            request.testType,
+            test_execution_request,
         )
-        
-        # Convert microservice response to API response
+
         return TestResponse(
             status=test_result.status,
             message=test_result.message,
             test_id=test_result.test_id,
-            test_flow = test_result.test_flow
+            results=test_result.results,
         )
-        
+
     except HTTPException:
         raise
     except ValueError as e:
@@ -116,7 +241,6 @@ async def run_test(request: TestRequest):
     except Exception as e:
         logger.error(f"Error processing test request: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
 @app.get("/test-results/{test_id}", response_model=dict)
 async def get_test_results(test_id: str):
     """Get detailed test results (placeholder for future implementation)"""

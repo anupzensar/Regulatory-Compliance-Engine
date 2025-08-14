@@ -63,17 +63,17 @@ class DetectService(BaseTestService):
     
     def validate_request(self, request: TestExecutionRequest) -> bool:
         """Validate detect request"""
-        if not hasattr(request, 'image_data') or not request.image_data:
+        if not getattr(request, "image_data", None):
             logger.error("Image data is required for detection")
             return False
-        
-        if not hasattr(request, 'class_ids') or not request.additional_params.get('class_ids'):
-            logger.error("Class IDs are required for detection")
+
+        class_ids = request.additional_params.get('class_ids')
+        if not class_ids or not isinstance(class_ids, (list, tuple)):
+            logger.error("class_ids (list) are required for detection")
             return False
-            
+
         try:
-            # Validate base64 format
-            base64.b64decode(request.image_data)
+            base64.b64decode(request.image_data.split(",")[-1])
             return True
         except Exception as e:
             logger.error(f"Invalid base64 image data: {str(e)}")
