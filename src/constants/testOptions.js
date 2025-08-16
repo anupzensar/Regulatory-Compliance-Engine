@@ -135,11 +135,6 @@ export const TEST_SUITES = [
     test_cases: [
       {
         id: 'r_001',
-        name: 'Core Features Regression Test',
-        description: 'Test core game features for regression issues'
-      },
-      {
-        id: 'r_002',
         name: 'UI Elements Regression Test',
         description: 'Verify all UI elements are working as expected'
       }

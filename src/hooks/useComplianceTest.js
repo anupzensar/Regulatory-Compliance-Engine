@@ -13,7 +13,8 @@ export const useComplianceTest = () => {
 
     try {
       let response;
-      let testType = selectedTestSuite || 'Session Reminder';
+      let testType = selectedTestSuite || 'Regression Reminder';
+      console.log(`Running test of type: ${testType}`);
       response = await submitComplianceTest(gameUrl,testType, selectedPolicy, selectedTestSuite, selectedTestCases);
 
       setResult(response);
