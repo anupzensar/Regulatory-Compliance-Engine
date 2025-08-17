@@ -1,6 +1,5 @@
 # filepath: app.py
-import sys
-import asyncio
+import base64
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException
@@ -12,6 +11,11 @@ import logging
 from config import settings
 from services.test_service_factory import test_service_factory
 from services.base_service import TestExecutionRequest
+
+from PIL import Image
+import io
+import easyocr
+import numpy as np
 
 # Configure logging
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL.upper()))
@@ -136,6 +140,42 @@ async def get_test_results(test_id: str):
         "message": "Test results retrieval not yet implemented",
         "note": "This endpoint will be implemented when test result storage is added"
     }
+
+# OCR input model
+
+from pydantic import BaseModel
+
+class OCRRequest(BaseModel):
+    imageData: str
+    text: str
+
+@app.post("/ocr/find-text")
+async def find_text_in_image(payload: OCRRequest):
+    reader = easyocr.Reader(['en'], gpu=False)
+    image_data = base64.b64decode(payload.imageData)
+    image = Image.open(io.BytesIO(image_data)).convert("RGB")
+    np_image = np.array(image)
+
+    results = reader.readtext(np_image)
+
+    query = payload.text.strip().lower()
+
+    for (bbox, text, confidence) in results:
+        if query in text.strip().lower():
+            x_coords = [point[0] for point in bbox]
+            y_coords = [point[1] for point in bbox]
+            x_center = int(sum(x_coords) / len(x_coords))
+            y_center = int(sum(y_coords) / len(y_coords))
+
+            return {
+                "found": True,
+                "text": text,
+                "x": x_center,
+                "y": y_center,
+                "confidence": round(confidence * 100, 2)
+            }
+
+    return {"found": False}
 
 # Run server on configured host/port
 if __name__ == "__main__":

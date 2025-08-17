@@ -8,7 +8,6 @@ class TestExecutionRequest(BaseModel):
     test_type: str
     additional_params: Dict[str, Any] = {}
     image_data: str | None = None
-    image_data: str | None = None
 
 class TestExecutionResponse(BaseModel):
     """Base response model for test execution"""

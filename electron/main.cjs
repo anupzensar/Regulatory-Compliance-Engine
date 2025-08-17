@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 
+
 // Global variable to store backend process
 let backendProcess = null;
 
@@ -306,6 +307,20 @@ ipcMain.handle('get-test-window-metrics', async () => {
     }
 
     return { width, height, zoomFactor, devicePixelRatio };
+});
+
+
+ipcMain.handle('save-screenshot', async (event, base64Image, filename = 'screenshot') => {
+    try {
+        const buffer = Buffer.from(base64Image, 'base64');
+        const fullPath = path.join(__dirname, `${filename}.png`);
+        fs.writeFileSync(fullPath, buffer);
+        console.log(`📸 Screenshot saved at: ${fullPath}`);
+        return { success: true, path: fullPath };
+    } catch (err) {
+        console.error('❌ Failed to save screenshot:', err);
+        return { success: false, error: err.message };
+    }
 });
 
 // -------------------------------------------------------------------------------------
