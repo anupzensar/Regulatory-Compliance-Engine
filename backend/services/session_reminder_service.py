@@ -85,7 +85,7 @@ class SessionReminderService(BaseTestService):
 
                     // Try to detect "Continue" or "Exit" using OCR
                     console.log(`Detecting continue button`);
-                    const result = await findTextInImage(image_data, "Continue");
+                    let result = await findTextInImage(image_data, "Continue");
 
                     if (result.found) {
                         console.log(`🟢 Found "${result.text}" at (${result.x}, ${result.y}) with confidence ${result.confidence}%`);
@@ -93,6 +93,11 @@ class SessionReminderService(BaseTestService):
                         console.warn(`❌ Neither "Continue" nor "Exit" found on screen.`);
                     }  
 
+                    if (isElectron()) {
+                        image_data = await window.api.captureScreenshot();
+                    } else {
+                        console.log('(Browser) Screenshot capture placeholder');
+                    }
                     console.log(`Detecting exit button`);
                     result = await findTextInImage(image_data, "Exit Game");
                    if (result.found) {
