@@ -120,4 +120,5 @@ temp/
 # package-lock.json
 # yarn.lock
 
-#pychache
+# __pycache__
+backend/services/__pycache__

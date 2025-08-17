@@ -474,7 +474,7 @@ const HomePage = () => {
         selectedTestCases
       );
       setFinalResult(response);
-      showToast("success", `Test submitted successfully! ${JSON.stringify(response)}`);
+      showToast("success", `Test Completed successfully!`);
     } catch (err) {
       setOrchestratorError(err);
       showToast("error", err.message || "Test failed");

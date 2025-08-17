@@ -137,106 +137,109 @@ ipcMain.handle('open-test-window', async (event, url) => {
 
 
 /**
- * Captures a screenshot of the current test window.
- * Returns base64-encoded PNG string.
- */
+ * Captures a screenshot of the current test window.
+ * Returns base64-encoded PNG string.
+ */
 ipcMain.handle('capture-screenshot', async () => {
-    if (!testWindow || testWindow.isDestroyed()) {
-        throw new Error('Test window is not available');
-    }
-    testWindow.focus();
-    const image = await testWindow.webContents.capturePage();
-    const pngBuffer = image.toPNG();
-    return pngBuffer.toString('base64');
+    if (!testWindow || testWindow.isDestroyed()) {
+        throw new Error('Test window is not available');
+    }
+    testWindow.focus();
+    const image = await testWindow.webContents.capturePage();
+    const pngBuffer = image.toPNG();
+    return pngBuffer.toString('base64');
 });
 
 /**
- * Performs a synthetic click at (x,y) in the test window.
- * If classId is 0, uses canvas pointer event simulation.
- * Otherwise, uses low-level sendInputEvent.
- * Adds a 10-second delay after the click event.
- */
+ * Performs a synthetic click at (x,y) in the test window.
+ * If classId is 0, uses canvas pointer event simulation.
+ * Otherwise, uses low-level sendInputEvent.
+ * Adds a 10-second delay after the click event.
+ */
 ipcMain.handle('perform-click', async (event, classId, x, y) => {
-    if (!testWindow || testWindow.isDestroyed()) {
-        throw new Error('Test window is not available');
-    }
+    if (!testWindow || testWindow.isDestroyed()) {
+        throw new Error('Test window is not available');
+    }
 
-    testWindow.focus();
+    testWindow.focus();
 
-    if (classId === 0) {
-        // --- Simulate pointer events on canvas at (x, y) ---
-        try {
-            const js = `
-                (function() {
-                    const canvas = document.querySelector('canvas');
-                    if (!canvas) return { success: false, error: 'No canvas found' };
-                    const rect = canvas.getBoundingClientRect();
-                    const clientX = rect.left + ${x};
-                    const clientY = rect.top + ${y};
-                    ['pointerdown', 'pointerup', 'click'].forEach(type => {
-                        canvas.dispatchEvent(new PointerEvent(type, {
-                            bubbles: true,
-                            cancelable: true,
-                            view: window,
-                            clientX,
-                            clientY,
-                            pointerType: 'mouse',
-                            isPrimary: true
-                        }));
-                    });
-                    return { success: true };
-                })();
-            `;
-            const result = await testWindow.webContents.executeJavaScript(js, true);
-            if (!result?.success) {
-                console.warn('Canvas pointer event simulation failed:', result?.error);
-            }
-        } catch (err) {
-            console.error('Canvas pointer event simulation error:', err);
-        }
-    } else {
-        // --- Low-level click ---
-        try {
-            testWindow.webContents.sendInputEvent({ type: 'mouseMove', x, y });
-            testWindow.webContents.sendInputEvent({
-                type: 'mouseDown',
-                x,
-                y,
-                button: 'left',
-                clickCount: 1,
-            });
-            testWindow.webContents.sendInputEvent({
-                type: 'mouseUp',
-                x,
-                y,
-                button: 'left',
-                clickCount: 1,
-            });
-        } catch (err) {
-            console.error('Low-level perform-click failed:', err);
-            throw err;
-        }
-    }
+    if (classId === 0) {
+        // --- Simulate pointer events on canvas at (x, y) ---
+        console.log(`Simulating canvas pointer events at (${x}, ${y})`);
+        try {
+            const js = `
+                    (function() {
+                    const canvas = document.querySelector('canvas');
+                    if (!canvas) return { success: false, error: 'No canvas found' };
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = rect.left + ${x};
+                    const clientY = rect.top + ${y};
+                    ['pointerdown', 'pointerup', 'click'].forEach(type => {
+                        canvas.dispatchEvent(new PointerEvent(type, {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window,
+                            clientX,
+                            clientY,
+                            pointerType: 'mouse',
+                            isPrimary: true
+                        }));
+                    });
+                    return { success: true };
+                })();
+            `;
+            const result = await testWindow.webContents.executeJavaScript(js, true);
+            if (!result?.success) {
+                console.warn('Canvas pointer event simulation failed:', result?.error);
+            }
+        } catch (err) {
+            console.error('Canvas pointer event simulation error:', err);
+        }
+    } else {
+        // --- Low-level click ---
+        console.log(`Performing low-level click at (${x}, ${y}) with classId ${classId}`);
 
-    // Wait to allow UI transition (modal close / next screen)
-    await new Promise(resolve => setTimeout(resolve, 10000));
-    return { success: true };
+        try {
+            testWindow.webContents.sendInputEvent({ type: 'mouseMove', x, y });
+            testWindow.webContents.sendInputEvent({
+                type: 'mouseDown',
+                x,
+                y,
+                button: 'left',
+                clickCount: 1,
+            });
+            testWindow.webContents.sendInputEvent({
+                type: 'mouseUp',
+                x,
+                y,
+                button: 'left',
+                clickCount: 1,
+            });
+        } catch (err) {
+            console.error('Low-level perform-click failed:', err);
+            throw err;
+        }
+    }
+
+    // Wait to allow UI transition (modal close / next screen)
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    return { success: true };
 });
 
 /**
- * Attempts an in-DOM click by executing a page-level click dispatcher function.
- * Falls back to low-level sendInputEvent if the in-page function is absent or fails.
- */
+ * Attempts an in-DOM click by executing a page-level click dispatcher function.
+ * Falls back to low-level sendInputEvent if the in-page function is absent or fails.
+ */
 ipcMain.handle('click-in-dom', async (event, rawX, rawY, options = {}) => {
-    if (!testWindow || testWindow.isDestroyed()) {
-        throw new Error('Test window is not available');
-    }
-    testWindow.focus();
+    if (!testWindow || testWindow.isDestroyed()) {
+        throw new Error('Test window is not available');
+    }
+    testWindow.focus();
 
-    try {
-        // Try the in-page dispatcher first
-        const serializedOptions = JSON.stringify(options);
-        const js = `
+    try {
+        // Try the in-page dispatcher first
+        const serializedOptions = JSON.stringify(options);
+        const js = `
             (async () => {
                 if (typeof window.api?.clickAt === 'function') {
                     try {
@@ -249,84 +252,84 @@ ipcMain.handle('click-in-dom', async (event, rawX, rawY, options = {}) => {
                 }
             })();
         `;
-        const result = await testWindow.webContents.executeJavaScript(js, true);
+        const result = await testWindow.webContents.executeJavaScript(js, true);
 
-        if (result && result.success) {
-            // Give UI time to respond
-            await new Promise(resolve => setTimeout(resolve, 500));
-            return { success: true, via: 'in-dom', detail: result };
-        } else {
-            console.warn('In-DOM click failed, falling back to low-level. Detail:', result);
-            // Fallback to low-level click
-            testWindow.webContents.sendInputEvent({ type: 'mouseMove', x: rawX, y: rawY });
-            testWindow.webContents.sendInputEvent({ type: 'mouseDown', x: rawX, y: rawY, button: 'left', clickCount: 1 });
-            testWindow.webContents.sendInputEvent({ type: 'mouseUp', x: rawX, y: rawY, button: 'left', clickCount: 1 });
-            await new Promise(resolve => setTimeout(resolve, 10000));
-            return { success: true, via: 'fallback-low-level', detail: result };
-        }
-    } catch (err) {
-        console.error('click-in-dom handler error:', err);
-        // As last resort, do low-level click
-        try {
-            testWindow.webContents.sendInputEvent({ type: 'mouseMove', x: rawX, y: rawY });
-            testWindow.webContents.sendInputEvent({ type: 'mouseDown', x: rawX, y: rawY, button: 'left', clickCount: 1 });
-            testWindow.webContents.sendInputEvent({ type: 'mouseUp', x: rawX, y: rawY, button: 'left', clickCount: 1 });
-            await new Promise(resolve => setTimeout(resolve, 10000));
-            return { success: true, via: 'fallback-on-error', error: err.toString() };
-        } catch (fallbackErr) {
-            console.error('Fallback low-level click also failed:', fallbackErr);
-            throw fallbackErr;
-        }
-    }
+        if (result && result.success) {
+            // Give UI time to respond
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return { success: true, via: 'in-dom', detail: result };
+        } else {
+            console.warn('In-DOM click failed, falling back to low-level. Detail:', result);
+            // Fallback to low-level click
+            testWindow.webContents.sendInputEvent({ type: 'mouseMove', x: rawX, y: rawY });
+            testWindow.webContents.sendInputEvent({ type: 'mouseDown', x: rawX, y: rawY, button: 'left', clickCount: 1 });
+            testWindow.webContents.sendInputEvent({ type: 'mouseUp', x: rawX, y: rawY, button: 'left', clickCount: 1 });
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            return { success: true, via: 'fallback-low-level', detail: result };
+        }
+    } catch (err) {
+        console.error('click-in-dom handler error:', err);
+        // As last resort, do low-level click
+        try {
+            testWindow.webContents.sendInputEvent({ type: 'mouseMove', x: rawX, y: rawY });
+            testWindow.webContents.sendInputEvent({ type: 'mouseDown', x: rawX, y: rawY, button: 'left', clickCount: 1 });
+            testWindow.webContents.sendInputEvent({ type: 'mouseUp', x: rawX, y: rawY, button: 'left', clickCount: 1 });
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            return { success: true, via: 'fallback-on-error', error: err.toString() };
+        } catch (fallbackErr) {
+            console.error('Fallback low-level click also failed:', fallbackErr);
+            throw fallbackErr;
+        }
+    }
 });
 
 
 /**
- * Returns metrics about the test window including size, approximate zoom, and devicePixelRatio.
- */
+ * Returns metrics about the test window including size, approximate zoom, and devicePixelRatio.
+ */
 ipcMain.handle('get-test-window-metrics', async () => {
-    if (!testWindow || testWindow.isDestroyed()) {
-        return null;
-    }
+    if (!testWindow || testWindow.isDestroyed()) {
+        return null;
+    }
 
-    const [width, height] = testWindow.getSize();
-    const zoomFactor = testWindow.webContents.getZoomFactor();
-    let devicePixelRatio = 1;
+    const [width, height] = testWindow.getSize();
+    const zoomFactor = testWindow.webContents.getZoomFactor();
+    let devicePixelRatio = 1;
 
-    try {
-        const dpr = await testWindow.webContents.executeJavaScript('window.devicePixelRatio', true);
-        if (typeof dpr === 'number' && !isNaN(dpr)) {
-            devicePixelRatio = dpr;
-        }
-    } catch (e) {
-        console.warn('Failed to get devicePixelRatio from renderer, defaulting to 1:', e);
-    }
+    try {
+        const dpr = await testWindow.webContents.executeJavaScript('window.devicePixelRatio', true);
+        if (typeof dpr === 'number' && !isNaN(dpr)) {
+            devicePixelRatio = dpr;
+        }
+    } catch (e) {
+        console.warn('Failed to get devicePixelRatio from renderer, defaulting to 1:', e);
+    }
 
-    return { width, height, zoomFactor, devicePixelRatio };
+    return { width, height, zoomFactor, devicePixelRatio };
 });
 
 // -------------------------------------------------------------------------------------
 
 // Event when the application is ready
 app.whenReady().then(() => {
-    createWindow();
+    createWindow();
 });
 
 // Quit the application when all windows are closed
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
 });
 
 // Re-create the window on macOS if the dock icon is clicked
 app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-    }
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+    }
 });
 
 // IPC handlers (example placeholder for backend status if needed)
 ipcMain.handle('check-backend-status', async () => {
-    return backendProcess !== null && !backendProcess.killed;
+    return backendProcess !== null && !backendProcess.killed;
 });
