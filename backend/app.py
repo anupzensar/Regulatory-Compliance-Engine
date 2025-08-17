@@ -1,5 +1,6 @@
 # filepath: app.py
 import base64
+import difflib
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException
@@ -16,6 +17,7 @@ from PIL import Image
 import io
 import easyocr
 import numpy as np
+import re
 
 # Configure logging
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL.upper()))
@@ -149,6 +151,14 @@ class OCRRequest(BaseModel):
     imageData: str
     text: str
 
+def normalize_text(s: str) -> str:
+    """Lowercase + collapse whitespace."""
+    return re.sub(r"\s+", " ", s.strip().lower())
+
+def is_close_match(query: str, candidate: str, cutoff: float = 0.8) -> bool:
+    """Fuzzy match with SequenceMatcher."""
+    return difflib.SequenceMatcher(None, query, candidate).ratio() >= cutoff
+
 @app.post("/ocr/find-text")
 async def find_text_in_image(payload: OCRRequest):
     reader = easyocr.Reader(['en'], gpu=False)
@@ -158,31 +168,31 @@ async def find_text_in_image(payload: OCRRequest):
 
     results = reader.readtext(np_image)
 
-    query = payload.text.strip().lower()
+    query = normalize_text(payload.text)
 
+    matches = []
     for (bbox, text, confidence) in results:
-        if query in text.strip().lower():
+        candidate = normalize_text(text)
+        if query in candidate or is_close_match(query, candidate):
             x_coords = [point[0] for point in bbox]
             y_coords = [point[1] for point in bbox]
             x_center = int(sum(x_coords) / len(x_coords))
             y_center = int(sum(y_coords) / len(y_coords))
 
-            return {
-                "found": True,
+            matches.append({
                 "text": text,
                 "x": x_center,
                 "y": y_center,
                 "confidence": round(confidence * 100, 2)
-            }
+            })
 
-    return {"found": False}
+    if matches:
+        # return best match (highest confidence)
+        best = max(matches, key=lambda m: m["confidence"])
+        return {
+            "found": True,
+            "best": best,
+            "matches": matches
+        }
 
-# Run server on configured host/port
-if __name__ == "__main__":
-    uvicorn.run(
-        "app:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.RELOAD,
-        log_level=settings.LOG_LEVEL
-    )
+    return {"found": False, "matches": []}
