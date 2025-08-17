@@ -115,6 +115,10 @@ const HomePage = () => {
       if (window.api && window.api.openTestWindow) {
         console.log(`Opening controlled test window for URL: ${urlToOpen}`);
         await window.api.openTestWindow(urlToOpen);
+
+        // Call the help file detection and clicking logic after the window opens
+        console.log('Attempting to detect and click help link...');
+        window.api.waitAndClickSpan();
       } else {
         console.warn(
           "Controlled test window API not available, opening in new tab"

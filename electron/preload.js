@@ -69,6 +69,42 @@ async function clickAtXY(rawX, rawY, options = {}) {
     return { success: false, reason: 'no clickable target found after retries' };
 }
 
+/**
+ * Waits for a container and a specific span within it, then attempts to click the span.
+ * This is adapted from the provided help file detection script.
+ */
+const waitAndClickSpan = (timeout = 180000, interval = 1000) => {
+  const start = Date.now();
+
+  const tryClick = () => {
+    const container = document.getElementById('titan-infobar-helpTextLink');
+    if (container) {
+      const span = container.querySelector('span');
+      if (span) {
+        console.log('[+] Span found, attempting click...');
+        span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          // Strategy 1: Native click
+          span.click();
+          console.log('Native click attempted on span.');
+        }, 200);
+      } else {
+        console.log('Span not found inside container yet...');
+        if (Date.now() - start < timeout) {
+          setTimeout(tryClick, interval);
+        }
+      }
+    } else if (Date.now() - start < timeout) {
+      console.log('Waiting for container to appear...');
+      setTimeout(tryClick, interval);
+    } else {
+      console.warn('Container not found within ' + timeout / 60000 + ' minutes.');
+    }
+  };
+
+  tryClick();
+};
+
 // ---- Context Bridge Exports ----
 contextBridge.exposeInMainWorld('api', {
     // Backend & messaging utilities
@@ -86,6 +122,9 @@ contextBridge.exposeInMainWorld('api', {
 
     // In-page click simulation
     clickAt: (x, y, options) => clickAtXY(x, y, options),
+
+    // Help file detection and clicking
+    waitAndClickSpan: waitAndClickSpan,
 
     // DOM inspection utilities
     isElementPresent: (selector) => {
