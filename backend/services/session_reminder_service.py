@@ -74,32 +74,38 @@ class SessionReminderService(BaseTestService):
                     console.log(`Waiting 50 seconds for session reminder popup to appear...`);
                     await new Promise(resolve => setTimeout(resolve, 60000)); // wait 50s
 
-                    //detect content
-                    console.log(`Detecting continue and exit buttons...`);
+                    console.log("Detecting continue and exit buttons...");
 
                     if (isElectron()) {
-                        image_data = await window.api.captureScreenshot();
+                    image_data = await window.api.captureScreenshot();
                     } else {
-                        console.log('(Browser) Screenshot capture placeholder');
+                    console.log("(Browser) Screenshot capture placeholder");
                     }
 
-                    // Try to detect "Continue" or "Exit" using OCR
-                    console.log(`Detecting continue button`);
-                    const result = await findTextInImage(image_data, "Continue");
+                    // Try to detect "Continue"
+                    console.log("Detecting Continue button...");
+                    let result = await findTextInImage(image_data, "Continue");
 
                     if (result.found) {
-                        console.log(`🟢 Found "${result.text}" at (${result.x}, ${result.y}) with confidence ${result.confidence}%`);
+                    console.log(
+                        `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
+                    );
                     } else {
-                        console.warn(`❌ Neither "Continue" nor "Exit" found on screen.`);
-                    }  
+                    console.log('🧐 "Continue" not found.');
+                    }
 
-                    console.log(`Detecting exit button`);
+                    // Try to detect "Exit Game"
+                    console.log("Detecting Exit Game button...");
                     result = await findTextInImage(image_data, "Exit Game");
-                   if (result.found) {
-                        console.log(`🟢 Found "${result.text}" at (${result.x}, ${result.y}) with confidence ${result.confidence}%`);
+
+                    if (result.found) {
+                    console.log(
+                        `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
+                    );
                     } else {
-                        console.warn(`❌ Neither "Continue" nor "Exit" found on screen.`);
-                    } 
+                    console.warn('❌ "Exit Game" not found.');
+                    }
+
                     """
                 pass
             elif(sub_test_id=='sr_002'):
