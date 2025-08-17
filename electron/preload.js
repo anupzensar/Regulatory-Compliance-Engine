@@ -1,6 +1,7 @@
 // electron/preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 
+
 /**
  * In-page dispatcher: synthesizes a click at given raw (pixel) coordinates,
  * accounting for devicePixelRatio and scrolling, targeting the topmost element.
@@ -81,6 +82,7 @@ contextBridge.exposeInMainWorld('api', {
     performClick: (classId, x, y) => ipcRenderer.invoke('perform-click', classId, x, y),
     clickInDOM: (rawX, rawY, options) => ipcRenderer.invoke('click-in-dom', rawX, rawY, options),
     getTestWindowMetrics: () => ipcRenderer.invoke('get-test-window-metrics'),
+    saveScreenshot: (base64Image, filename) => ipcRenderer.invoke('save-screenshot', base64Image, filename),
 
     // In-page click simulation
     clickAt: (x, y, options) => clickAtXY(x, y, options),

@@ -105,10 +105,13 @@ export const submitComplianceTest = async (
       // class_id/imageData are provided per-step via detectService()
       additionalParams: {}
     };
+    console.log('payload:', payload);
 
     const res = await apiClient.post('/run-test', payload);
 
     console.log('api response received');
+    console.log('Response data:', res.data);
+
 
     if (res.data.script) {
       console.log('📜 Executing backend script...');
@@ -116,6 +119,7 @@ export const submitComplianceTest = async (
       const executeScript = new Function(
         'isElectron',
         'detectService',
+        'findTextInImage',
         'performClick',
         'window',
         `return (async () => { ${res.data.script} })();`
@@ -124,7 +128,10 @@ export const submitComplianceTest = async (
       const detectServiceBound = async (testType, classID, image_data) =>
         await detectService(testType, classID, image_data);
 
-      await executeScript(isElectron, detectServiceBound, performClick, window);
+      const findTextInImageBound = async (imageData, text) =>
+        await findTextInImage(imageData, text);
+
+      await executeScript(isElectron, detectServiceBound, findTextInImageBound, performClick, window);
 
       console.log('✅ Script execution finished');
     } else {
@@ -167,6 +174,27 @@ const detectService = async (testType, classID, image_data) => {
     const res = await apiClient.post('/run-test', payload);
     // return only the data so the script can access response.results.*
     return res.data;
+  } catch (error) {
+    if (error.response?.status === 400) {
+      throw new Error(error.response.data.detail || 'Invalid request');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error. Try later.');
+    } else if (error.code === 'ECONNABORTED') {
+      throw new Error('Request timeout.');
+    } else {
+      throw new Error('Network error.');
+    }
+  }
+};
+
+const findTextInImage = async (imageData, text) => {
+  try {
+    const payload = {
+      imageData,
+      text,
+    };
+    const res = await apiClient.post('/ocr/find-text', payload);
+    return res;
   } catch (error) {
     if (error.response?.status === 400) {
       throw new Error(error.response.data.detail || 'Invalid request');

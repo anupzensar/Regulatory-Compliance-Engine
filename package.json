@@ -21,7 +21,8 @@
     "electron": "^25.9.8",
     "lucide-react": "^0.294.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tesseract.js": "^6.0.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0-alpha.24",
