@@ -6,16 +6,15 @@ export const useComplianceTest = () => {
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
 
-  const runTest = useCallback(async (gameUrl, selectedPolicy, selectedTestSuite, selectedTestCases) => {
+  const runTest = useCallback(async (gameUrl, testType, selectedPolicy, selectedTestSuite, selectedTestCases) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
 
     try {
       let response;
-      let testType = selectedTestSuite || 'Regression Reminder';
       console.log(`Running test of type: ${testType}`);
-      response = await submitComplianceTest(gameUrl,testType, selectedPolicy, selectedTestSuite, selectedTestCases);
+      response = await submitComplianceTest(gameUrl, testType, selectedPolicy, selectedTestSuite, selectedTestCases);
 
       setResult(response);
       return response;

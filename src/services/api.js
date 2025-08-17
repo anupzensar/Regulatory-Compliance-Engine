@@ -1,5 +1,4 @@
-// api.js
-
+// filepath: api.js
 import axios from 'axios';
 
 // Detect if running in Electron
@@ -9,7 +8,6 @@ const isElectron = () =>
   typeof window.api.getBackendUrl === 'function';
 
 // Base URL (Electron → from preload, Browser → from env)
-// Base URL (Electron → from preload, Browser → from env)
 const API_BASE_URL = isElectron()
   ? window.api.getBackendUrl()
   : (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:7000');
@@ -17,7 +15,7 @@ const API_BASE_URL = isElectron()
 // Axios client
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000, // increase to 60 seconds for heavier ops
+  timeout: 60000, // 60s for heavier ops
   headers: {
     'Content-Type': 'application/json',
   },
@@ -81,8 +79,11 @@ export const performClick = async (classId, x, y) => {
   }
 };
 
-
-
+/**
+ * Submit compliance/regression test via /run-test
+ * - Sends gameUrl, testType, and optional suite/case selections
+ * - If backend returns a `script`, execute it in-page (as before)
+ */
 export const submitComplianceTest = async (
   gameUrl,
   testType,
@@ -95,14 +96,22 @@ export const submitComplianceTest = async (
     // make gameUrl available to detectService
     lastGameUrl = gameUrl;
 
-    const res = await apiClient.post('/regression-test' , {
-      url : gameUrl
-    });
+    const payload = {
+      gameUrl,
+      testType,
+      selectedPolicy: selectedPolicy ?? null,
+      selectedTestSuite: selectedTestSuite ?? null,
+      selectedTestCases: selectedTestCases ?? null,
+      // class_id/imageData are provided per-step via detectService()
+      additionalParams: {}
+    };
+
+    const res = await apiClient.post('/run-test', payload);
 
     console.log('api response received');
 
     if (res.data.script) {
-      console.log("📜 Executing backend script...");
+      console.log('📜 Executing backend script...');
 
       const executeScript = new Function(
         'isElectron',
@@ -117,9 +126,9 @@ export const submitComplianceTest = async (
 
       await executeScript(isElectron, detectServiceBound, performClick, window);
 
-      console.log("✅ Script execution finished");
+      console.log('✅ Script execution finished');
     } else {
-      console.warn("⚠ No script found in backend response.");
+      console.warn('⚠ No script found in backend response.');
     }
 
     return res.data;
@@ -136,21 +145,13 @@ export const submitComplianceTest = async (
   }
 };
 
-//  test_execution_request = TestExecutionRequest(
-//             game_url=str(request.gameUrl),
-//             test_type=request.testType,
-//             additional_params={
-//                 "selectedPolicy": request.selectedPolicy,
-//                 "selectedTestSuite": request.selectedTestSuite,
-//                 "selectedTestCases": request.selectedTestCases,
-//                 "class_ids":request.class_id,
-//                 "image_data":request.imageData
-//             },
-            
-//         )
-
+// Keep last used URL for per-step calls
 let lastGameUrl = null;
 
+/**
+ * Per-step detection service
+ * - Sends class_ids and imageData inside additionalParams
+ */
 const detectService = async (testType, classID, image_data) => {
   console.log(`Detecting service for type: ${testType}, classID: ${classID}`);
   try {
@@ -178,7 +179,5 @@ const detectService = async (testType, classID, image_data) => {
     }
   }
 };
-
-
 
 export default apiClient;

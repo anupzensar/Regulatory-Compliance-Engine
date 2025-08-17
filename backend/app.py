@@ -1,17 +1,17 @@
+# filepath: app.py
 import sys
 import asyncio
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-# Now import everything else
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl, Field
 import uvicorn
 import logging
+
 from config import settings
 from services.test_service_factory import test_service_factory
 from services.base_service import TestExecutionRequest
-from fastapi import Body
 
 # Configure logging
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL.upper()))
@@ -32,28 +32,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Pydantic models for request validation
-# TODO: Create a paramenter object where we can add anything according to time
+# Pydantic models for request/response
 class TestRequest(BaseModel):
     gameUrl: HttpUrl
     testType: str
-    selectedPolicy: str | None = None
-    selectedTestSuite: str | None = None
-    selectedTestCases: list[str] | None = None
-    class_id: int | None = None
-    imageData: str | None = None
+    selectedPolicy: Optional[str] = None
+    selectedTestSuite: Optional[str] = None
+    selectedTestCases: Optional[list[str]] = None
+    class_id: Optional[int] = None
+    imageData: Optional[str] = None
     additional_params: Dict[str, Any] = Field(default_factory=dict, alias='additionalParams')
-    
-    
+
 class TestResponse(BaseModel):
     status: str
     message: str
-    test_id: str = None
+    test_id: Optional[str] = None
     results: Dict[str, Any] = {}
-    
-class RegressionRequest(BaseModel):
-    url: HttpUrl
-    # headless: bool = True
+    # expose an optional script at top-level so the frontend can run it
+    script: Optional[str] = None
 
 @app.get("/", response_model=dict)
 def read_root():
@@ -67,124 +63,6 @@ def get_test_types():
         "test_types": test_service_factory.get_available_test_types(),
         "count": len(test_service_factory.get_available_test_types())
     }
-
-
-
-@app.post("/regression-test")
-async def run_regression_test(request: RegressionRequest):
-    print(f"Running regression test for URL: {request.url}")
-    print(f'sending request to regression service')
-    return {
-        "script": """
-console.log('Starting regression test script...');
-let image_data = null;
-let x, y;
-
-const getTarget = (resp) => {
-    const ct = resp && resp.results ? resp.results.click_targets : null;
-    if (Array.isArray(ct)) {
-        const t = ct.find(t => t && t.click_x != null && t.click_y != null) || ct[0];
-        return t || {};
-    }
-    return ct || {};
-};
-
-let testType = "UI Element Detection";
-
-// Step 1
-if (isElectron()) {
-    image_data = await window.api.captureScreenshot();
-} else {
-    console.log('(Browser) Screenshot capture placeholder');
-}
-let response = await detectService(testType, 0, image_data);
-let target = getTarget(response);
-x = target.click_x || 0;
-y = target.click_y || 0;
-console.log(`Detected service at (${x}, ${y})`);
-await performClick(0, x, y);
-
-// Step 2
-if (isElectron()) {
-    image_data = await window.api.captureScreenshot();
-} else {
-    console.log('(Browser) Screenshot capture placeholder');
-}
-response = await detectService(testType, 1, image_data);
-target = getTarget(response);
-x = target.click_x || 0;
-y = target.click_y || 0;
-console.log(`Detected service at (${x}, ${y})`);
-await performClick(1, x, y);
-
-// Step 3
-if (isElectron()) {
-    image_data = await window.api.captureScreenshot();
-} else {
-    console.log('(Browser) Screenshot capture placeholder');
-}
-response = await detectService(testType, 1, image_data);
-target = getTarget(response);
-x = target.click_x || 0;
-y = target.click_y || 0;
-console.log(`Detected service at (${x}, ${y})`);
-await performClick(1, x, y);
-
-// Step 4
-if (isElectron()) {
-    image_data = await window.api.captureScreenshot();
-} else {
-    console.log('(Browser) Screenshot capture placeholder');
-}
-response = await detectService(testType, 15, image_data);
-target = getTarget(response);
-x = target.click_x || 0;
-y = target.click_y || 0;
-console.log(`Detected service at (${x}, ${y})`);
-await performClick(15, x, y);
-
-// Step 5
-if (isElectron()) {
-    image_data = await window.api.captureScreenshot();
-} else {
-    console.log('(Browser) Screenshot capture placeholder');
-}
-response = await detectService(testType, 7, image_data);
-target = getTarget(response);
-x = target.click_x || 0;
-y = target.click_y || 0;
-console.log(`Detected service at (${x}, ${y})`);
-await performClick(7, x, y);
-
-// Step 6
-if (isElectron()) {
-    image_data = await window.api.captureScreenshot();
-} else {
-    console.log('(Browser) Screenshot capture placeholder');
-}
-response = await detectService(testType, 10, image_data);
-target = getTarget(response);
-x = target.click_x || 0;
-y = target.click_y || 0;
-console.log(`Detected service at (${x}, ${y})`);
-await performClick(10, x, y);
-
-// Step 7 
-if (isElectron()) {
-    image_data = await window.api.captureScreenshot();
-} else {
-    console.log('(Browser) Screenshot capture placeholder');
-}
-response = await detectService(testType, 11, image_data);
-target = getTarget(response);
-x = target.click_x || 0;
-y = target.click_y || 0;
-console.log(`Detected service at (${x}, ${y})`);
-await performClick(11, x, y);
-"""
-    }
-
-
 
 @app.post("/run-test", response_model=TestResponse)
 async def run_test(request: TestRequest):
@@ -226,11 +104,17 @@ async def run_test(request: TestRequest):
             test_execution_request,
         )
 
+        # Bubble up an optional 'script' from the service results to top-level
+        script = None
+        if isinstance(test_result.results, dict):
+            script = test_result.results.get("script")
+
         return TestResponse(
             status=test_result.status,
             message=test_result.message,
             test_id=test_result.test_id,
             results=test_result.results,
+            script=script
         )
 
     except HTTPException:
@@ -241,6 +125,7 @@ async def run_test(request: TestRequest):
     except Exception as e:
         logger.error(f"Error processing test request: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/test-results/{test_id}", response_model=dict)
 async def get_test_results(test_id: str):
     """Get detailed test results (placeholder for future implementation)"""
@@ -252,14 +137,12 @@ async def get_test_results(test_id: str):
         "note": "This endpoint will be implemented when test result storage is added"
     }
 
-
-
-# Run server on port 7000
+# Run server on configured host/port
 if __name__ == "__main__":
     uvicorn.run(
-        "app:app", 
-        host=settings.HOST, 
-        port=settings.PORT, 
+        "app:app",
+        host=settings.HOST,
+        port=settings.PORT,
         reload=settings.RELOAD,
         log_level=settings.LOG_LEVEL
     )

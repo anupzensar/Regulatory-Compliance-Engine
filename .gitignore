@@ -121,4 +121,4 @@ temp/
 # yarn.lock
 
 # __pycache__
-backend/services/__pycache__
+backend/services/__pycache__/
