@@ -33,8 +33,9 @@ class RegressionService(BaseTestService):
 
     async def execute_test(self, request: TestExecutionRequest) -> TestExecutionResponse:
         """
-        Legacy full-run regression test. 
-        The new orchestrated per-step flow should use CLASS_FLOW and step validation separately.
+        For Regression, return an orchestration script to be executed in the renderer.
+        Other validations (per-step detect/click) are handled by the injected script
+        calling the UI Element Detection service via the standard /run-test endpoint.
         """
         start_time = time.time()
         try:
@@ -45,21 +46,125 @@ class RegressionService(BaseTestService):
             execution_time = time.time() - start_time
             test_id = make_stable_test_id(self.test_type, request.game_url, start_time)
 
-            
-            dummy_results = {}
+            script = (
+                """
+console.log('Starting regression test script...');
+let image_data = null;
+let x, y;
 
-            
+const getTarget = (resp) => {
+    const ct = resp && resp.results ? resp.results.click_targets : null;
+    if (Array.isArray(ct)) {
+        const t = ct.find(t => t && t.click_x != null && t.click_y != null) || ct[0];
+        return t || {};
+    }
+    return ct || {};
+};
+
+let testType = "UI Element Detection";
+
+// Step 1
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+let response = await detectService(testType, 0, image_data);
+let target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 2
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 1, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 3
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 1, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 4
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 15, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 5
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 7, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 6
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 10, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+
+// Step 7 
+if (isElectron()) {
+    image_data = await window.api.captureScreenshot();
+} else {
+    console.log('(Browser) Screenshot capture placeholder');
+}
+response = await detectService(testType, 11, image_data);
+target = getTarget(response);
+x = target.click_x || 0;
+y = target.click_y || 0;
+console.log(`Detected service at (${x}, ${y})`);
+await performClick(0, x, y);
+"""
+            )
+
             return TestExecutionResponse(
                 status="success",
-                message=f"Regression test completed successfully for URL: {request.game_url}",
+                message=f"Regression script generated for URL: {request.game_url}",
                 test_id=test_id,
                 execution_time=execution_time,
                 results={
-                    "core_features_working": True,
-                    "no_critical_errors": True,
-                    "ui_elements_present": True,
+                    "script": script,
                     "test_flow": self.CLASS_FLOW,
-                    "flow_description": "Load Game -> Spin Button -> Win Animation -> Collect Button"
+                    "flow_description": "Orchestrated regression flow using detect + clicks"
                 }
             )
 

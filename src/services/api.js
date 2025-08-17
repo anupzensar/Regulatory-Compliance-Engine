@@ -95,21 +95,31 @@ export const submitComplianceTest = async (
     // make gameUrl available to detectService
     lastGameUrl = gameUrl;
 
-    const res = await apiClient.post('/regression-test' , {
-      url : gameUrl
-    });
+    // Always call the unified /run-test endpoint using factory pattern
+    const payload = {
+      gameUrl,
+      testType: testType || 'Regression',
+      additionalParams: {
+        selectedPolicy,
+        selectedTestSuite,
+        selectedTestCases,
+      },
+    };
+
+    const res = await apiClient.post('/run-test', payload);
 
     console.log('api response received');
 
-    if (res.data.script) {
-      console.log("📜 Executing backend script...");
+    const script = res?.data?.results?.script;
+    if (script) {
+      console.log("📜 Executing backend script from Regression service...");
 
       const executeScript = new Function(
         'isElectron',
         'detectService',
         'performClick',
         'window',
-        `return (async () => { ${res.data.script} })();`
+        `return (async () => { ${script} })();`
       );
 
       const detectServiceBound = async (testType, classID, image_data) =>
@@ -118,8 +128,6 @@ export const submitComplianceTest = async (
       await executeScript(isElectron, detectServiceBound, performClick, window);
 
       console.log("✅ Script execution finished");
-    } else {
-      console.warn("⚠ No script found in backend response.");
     }
 
     return res.data;
@@ -145,9 +153,9 @@ export const submitComplianceTest = async (
 //                 "selectedTestCases": request.selectedTestCases,
 //                 "class_ids":request.class_id,
 //                 "image_data":request.imageData
-//             },
-            
+//             }, 
 //         )
+
 
 let lastGameUrl = null;
 

@@ -162,7 +162,6 @@ ipcMain.handle('perform-click', async (event, classId, x, y) => {
     }
 
     testWindow.focus();
-
     if (classId === 0) {
         // --- Simulate pointer events on canvas at (x, y) ---
         try {
