@@ -194,7 +194,8 @@ const findTextInImage = async (imageData, text) => {
       text,
     };
     const res = await apiClient.post('/ocr/find-text', payload);
-    return res;
+    print(res)
+    return res.data;
   } catch (error) {
     if (error.response?.status === 400) {
       throw new Error(error.response.data.detail || 'Invalid request');

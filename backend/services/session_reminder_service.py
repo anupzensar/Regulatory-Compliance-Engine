@@ -85,25 +85,21 @@ class SessionReminderService(BaseTestService):
 
                     // Try to detect "Continue" or "Exit" using OCR
                     console.log(`Detecting continue button`);
-                    const result = await findTextInImage(imageData, 'Continue');
-
-                    if (!result.found) {
-                        console.log('🧐 "Continue" not found.');
-                    }
-                    result = await findTextInImage(image_data, "Exit Game");
-                    if (!result.found) {
-                        console.log('🧐 "Exit Game" not found.');
-                    }
+                    const result = await findTextInImage(image_data, "Continue");
 
                     if (result.found) {
-                        x = result.x;
-                        y = result.y;
-                        console.log(`🟢 Found "${result.text}" at (${x}, ${y}) with confidence ${result.confidence}`);
+                        console.log(`🟢 Found "${result.text}" at (${result.x}, ${result.y}) with confidence ${result.confidence}%`);
                     } else {
                         console.warn(`❌ Neither "Continue" nor "Exit" found on screen.`);
-                    }
+                    }  
 
-
+                    console.log(`Detecting exit button`);
+                    result = await findTextInImage(image_data, "Exit Game");
+                   if (result.found) {
+                        console.log(`🟢 Found "${result.text}" at (${result.x}, ${result.y}) with confidence ${result.confidence}%`);
+                    } else {
+                        console.warn(`❌ Neither "Continue" nor "Exit" found on screen.`);
+                    } 
                     """
                 pass
             elif(sub_test_id=='sr_002'):
