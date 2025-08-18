@@ -78,7 +78,7 @@ class HelpFileService(BaseTestService):
                     } else {
                         console.log('(Browser) Screenshot capture placeholder');
                     }
-                    let result = await findTextInImage(image_data, "Continue");
+                    let result = await findTextInImage(image_data, "Help");
 
                     x = result.best.x || 0;
                     y = result.best.y || 0;
