@@ -146,9 +146,9 @@ export const TEST_SUITES = [
     description: 'Help-File Test Case',
     test_cases: [
       {
-        id: 'r_001',
-        name: 'Help File Test',
-        description: 'Help file check'
+        id: 'hf_001',
+        name: 'Help File Compliance Test',
+        description: 'Check help file for required disclaimer and UK RTS compliance text'
       }
     ]
   }
