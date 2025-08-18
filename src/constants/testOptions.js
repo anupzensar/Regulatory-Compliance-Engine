@@ -139,5 +139,17 @@ export const TEST_SUITES = [
         description: 'Verify all UI elements are working as expected'
       }
     ]
+  },
+  {
+    label: 'Help-File',
+    value: 'Help-File',
+    description: 'Help-File Test Case',
+    test_cases: [
+      {
+        id: 'r_001',
+        name: 'Help File Test',
+        description: 'Help file check'
+      }
+    ]
   }
 ];

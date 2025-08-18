@@ -209,3 +209,5 @@ const findTextInImage = async (imageData, text) => {
 };
 
 export default apiClient;
+
+
