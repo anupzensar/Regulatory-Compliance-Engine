@@ -72,7 +72,14 @@ export const checkBackendStatus = async () => {
  */
 export const performClick = async (classId, x, y) => {
   if (isElectron()) {
-    return await window.api.performClick(classId, x, y);
+    // sanitize/round coords
+    const xi = Number.isFinite(Number(x)) ? Math.round(Number(x)) : null;
+    const yi = Number.isFinite(Number(y)) ? Math.round(Number(y)) : null;
+    if (xi == null || yi == null) {
+      console.warn('performClick skipped: invalid coordinates', x, y);
+      return { success: false, reason: 'Invalid coordinates' };
+    }
+    return await window.api.performClick(classId, xi, yi);
   } else {
     console.warn('performClick called in browser — no-op');
     return { success: false, reason: 'Not running in Electron' };
@@ -116,24 +123,82 @@ export const submitComplianceTest = async (
     if (res.data.script) {
       console.log('📜 Executing backend script...');
 
-      const executeScript = new Function(
-        'isElectron',
-        'detectService',
-        'findTextInImage',
-        'performClick',
-        'window',
-        `return (async () => { ${res.data.script} })();`
-      );
+      // Collect logs and step snapshots for PDF report
+      const logs = [];
+      const steps = [];
+      const originalLog = console.log;
+      const originalWarn = console.warn;
+      const originalError = console.error;
+      try {
+        console.log = (...args) => { logs.push(args.map(String).join(' ')); originalLog(...args); };
+        console.warn = (...args) => { logs.push('[WARN] ' + args.map(String).join(' ')); originalWarn(...args); };
+        console.error = (...args) => { logs.push('[ERROR] ' + args.map(String).join(' ')); originalError(...args); };
 
-      const detectServiceBound = async (testType, classID, image_data) =>
-        await detectService(testType, classID, image_data);
+        const recordStep = async (classId, x, y) => {
+          try {
+            if (isElectron() && window.api?.captureScreenshot) {
+              const b64 = await window.api.captureScreenshot();
+              const dataUri = `data:image/png;base64,${b64}`;
+              steps.push({ step_index: steps.length + 1, class_id: classId, x, y, imageData: dataUri, timestamp: new Date().toISOString() });
+            } else {
+              steps.push({ step_index: steps.length + 1, class_id: classId, x, y, imageData: null, timestamp: new Date().toISOString() });
+            }
+          } catch (e) {
+            logs.push('[recordStep error] ' + String(e?.message || e));
+          }
+        };
 
-      const findTextInImageBound = async (imageData, text) =>
-        await findTextInImage(imageData, text);
+        const wrappedPerformClick = async (classId, x, y) => {
+          await recordStep(classId, x, y);
+          return await performClick(classId, x, y);
+        };
 
-      await executeScript(isElectron, detectServiceBound, findTextInImageBound, performClick, window);
+        const executeScript = new Function(
+          'isElectron',
+          'detectService',
+          'findTextInImage',
+          'performClick',
+          'window',
+          `return (async () => { ${res.data.script} })();`
+        );
 
-      console.log('✅ Script execution finished');
+        const detectServiceBound = async (testType, classID, image_data) =>
+          await detectService(testType, classID, image_data);
+
+        const findTextInImageBound = async (imageData, text) =>
+          await findTextInImage(imageData, text);
+
+        await executeScript(isElectron, detectServiceBound, findTextInImageBound, wrappedPerformClick, window);
+        console.log('✅ Script execution finished');
+
+        // Generate PDF report
+        try {
+          const payload = {
+            test_id: res.data.test_id || null,
+            gameUrl,
+            testType,
+            logs,
+            steps,
+          };
+          const reportRes = await apiClient.post('/reports/generate', payload);
+          console.log('📄 Report generated:', reportRes.data.url);
+          res.data.report = reportRes.data;
+          res.data.reportContext = payload;
+        } catch (reportErr) {
+          console.warn('Failed to generate report:', reportErr?.message || reportErr);
+          res.data.reportContext = {
+            test_id: res.data.test_id || null,
+            gameUrl,
+            testType,
+            logs,
+            steps,
+          };
+        }
+      } finally {
+        console.log = originalLog;
+        console.warn = originalWarn;
+        console.error = originalError;
+      }
     } else {
       console.warn('⚠ No script found in backend response.');
     }
@@ -150,6 +215,12 @@ export const submitComplianceTest = async (
       throw new Error('Network error.');
     }
   }
+};
+
+// Manually trigger PDF generation (use saved reportContext from a prior run)
+export const generateReport = async (reportContext) => {
+  const res = await apiClient.post('/reports/generate', reportContext);
+  return res.data;
 };
 
 // Keep last used URL for per-step calls

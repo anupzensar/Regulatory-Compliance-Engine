@@ -115,82 +115,73 @@ class SessionReminderService(BaseTestService):
                     let x, y;
 
                     const getTarget = (resp) => {
-                    const ct = resp && resp.results ? resp.results.click_targets : null;
-                    if (Array.isArray(ct)) {
-                        const t = ct.find(t => t && t.click_x != null && t.click_y != null) || ct[0];
-                        return t || {};
-                    }
-                    return ct || {};
+                        const ct = resp && resp.results ? resp.results.click_targets : null;
+                        if (Array.isArray(ct)) {
+                            const t = ct.find(t => t && t.click_x != null && t.click_y != null) || ct[0];
+                            return t || {};
+                        }
+                        return ct || {};
                     };
 
                     let testType = "UI Element Detection";
 
                     // Step 1
                     if (isElectron()) {
-                    image_data = await window.api.captureScreenshot();
+                        image_data = await window.api.captureScreenshot();
                     } else {
-                    console.log('(Browser) Screenshot capture placeholder');
+                        console.log('(Browser) Screenshot capture placeholder');
                     }
                     let response = await detectService(testType, 0, image_data);
                     let target = getTarget(response);
                     x = target.click_x || 0;
                     y = target.click_y || 0;
                     console.log(`Detected service at (${x}, ${y})`);
-                    await performClick(0, x, y);
+                    if (x != null && y != null) { await performClick(0, x, y); } else { console.warn('Skip click: no coords'); }
 
-                    //wait 50 second
-                    console.log(`Waiting 50 seconds for session reminder popup to appear...`);
-                    await new Promise(resolve => setTimeout(resolve, 60000)); // wait 50s
+                    // wait 60 seconds for the popup
+                    console.log(`Waiting 60 seconds for session reminder popup to appear...`);
+                    await new Promise(resolve => setTimeout(resolve, 60000));
 
                     console.log("Detecting continue and exit buttons...");
 
                     if (isElectron()) {
-                    image_data = await window.api.captureScreenshot();
+                        image_data = await window.api.captureScreenshot();
                     } else {
-                    console.log("(Browser) Screenshot capture placeholder");
+                        console.log("(Browser) Screenshot capture placeholder");
                     }
 
                     // Try to detect "Continue"
                     console.log("Detecting Continue button...");
                     let result = await findTextInImage(image_data, "Continue");
+                    if (result.found) {
+                        console.log(`Continue found at (${result.best.x}, ${result.best.y}) conf ${result.best.confidence}%`);
+                    } else {
+                        console.log('"Continue" not found.');
+                    }
 
-                    // if (result.found) {
-                    //   console.log(
-                    //     `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
-                    //   );
-
-                    // } else {
-                    //   console.log('🧐 "Continue" not found.');
-                    // }
-
-                    //Try to detect "Exit Game"
+                    // Try to detect "Exit Game"
                     console.log("Detecting Exit Game button...");
                     result = await findTextInImage(image_data, "Exit Game");
 
                     if (result.found) {
-                    console.log(
-                    `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
+                        console.log(`🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`);
+                        x = result.best.x || 0;
+                        y = result.best.y || 0;
+                        if (x != null && y != null) { await performClick(1, x, y); }
 
-                    x = result.best.x || 0;
-                    y = result.best.y || 0;
-
-                    await performClick(1, x, y);
-
-
-                    if (isElectron()) {
-                        image_data = await window.api.captureScreenshot();
+                        if (isElectron()) {
+                            image_data = await window.api.captureScreenshot();
+                        } else {
+                            console.log('(Browser) Screenshot capture placeholder');
+                        }
+                        response = await detectService(testType, 1, image_data);
+                        target = getTarget(response);
+                        x = target.click_x || 0;
+                        y = target.click_y || 0;
+                        console.log(`Detected service at (${x}, ${y})`);
+                        if (x != null && y != null) { await performClick(1, x, y); } else { console.warn('Skip click: no coords'); }
                     } else {
-                        console.log('(Browser) Screenshot capture placeholder');
-                    }
-                    response = await detectService(testType, 1, image_data);
-                    target = getTarget(response);
-                    x = target.click_x || 0;
-                    y = target.click_y || 0;
-                    console.log(`Detected service at (${x}, ${y})`);
-                    await performClick(1, x, y);
-                    );
-                    } else {
-                    console.warn('❌ "Exit Game" not found.');
+                        console.warn('❌ "Exit Game" not found.');
                     }
                     """
                 pass
