@@ -30,7 +30,8 @@ class TestServiceFactory:
             PracticePlayService(),
             MaxBetLimitService(),
             DetectService(),
-            RegressionService()
+            RegressionService(),
+            HelpFileService()
         ]
         
         for service in services:
