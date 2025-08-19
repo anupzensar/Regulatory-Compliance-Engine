@@ -148,9 +148,50 @@ export const submitComplianceTest = async (
           }
         };
 
+        const recordImageStep = async (operation, details = {}) => {
+          try {
+            if (isElectron() && window.api?.captureScreenshot) {
+              const b64 = await window.api.captureScreenshot();
+              const dataUri = `data:image/png;base64,${b64}`;
+              steps.push({ 
+                step_index: steps.length + 1, 
+                operation: operation,
+                details: details,
+                imageData: dataUri, 
+                timestamp: new Date().toISOString() 
+              });
+            } else {
+              steps.push({ 
+                step_index: steps.length + 1, 
+                operation: operation,
+                details: details,
+                imageData: null, 
+                timestamp: new Date().toISOString() 
+              });
+            }
+          } catch (e) {
+            logs.push('[recordImageStep error] ' + String(e?.message || e));
+          }
+        };
+
         const wrappedPerformClick = async (classId, x, y) => {
           await recordStep(classId, x, y);
           return await performClick(classId, x, y);
+        };
+
+        const wrappedFindTextInImage = async (imageData, text) => {
+          await recordImageStep('OCR', { text, imageData: imageData ? 'provided' : 'captured' });
+          return await findTextInImage(imageData, text);
+        };
+
+        const wrappedCaptureScreenshot = async () => {
+          await recordImageStep('Manual Screenshot', {});
+          if (isElectron() && window.api?.captureScreenshot) {
+            return await window.api.captureScreenshot();
+          } else {
+            console.log('(Browser) Screenshot capture placeholder');
+            return null;
+          }
         };
 
         const executeScript = new Function(
@@ -159,16 +200,19 @@ export const submitComplianceTest = async (
           'findTextInImage',
           'performClick',
           'window',
+          'captureScreenshot',
           `return (async () => { ${res.data.script} })();`
         );
 
-        const detectServiceBound = async (testType, classID, image_data) =>
-          await detectService(testType, classID, image_data);
+        const detectServiceBound = async (testType, classID, image_data) => {
+          await recordImageStep('Detection', { testType, classID, imageData: image_data ? 'provided' : 'captured' });
+          return await detectService(testType, classID, image_data);
+        };
 
         const findTextInImageBound = async (imageData, text) =>
-          await findTextInImage(imageData, text);
+          await wrappedFindTextInImage(imageData, text);
 
-        await executeScript(isElectron, detectServiceBound, findTextInImageBound, wrappedPerformClick, window);
+        await executeScript(isElectron, detectServiceBound, findTextInImageBound, wrappedPerformClick, window, wrappedCaptureScreenshot);
         console.log('✅ Script execution finished');
 
         // Generate PDF report
