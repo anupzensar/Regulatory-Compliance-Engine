@@ -15,32 +15,32 @@ def make_stable_test_id(test_type: str, game_url: str, timestamp: float) -> str:
     digest = hashlib.sha256(base.encode("utf-8")).hexdigest()
     return f"{test_type.lower().replace(' ', '_')}_{digest[:12]}"
 
+
 class SessionReminderService(BaseTestService):
     """Service for Session Reminder compliance testing"""
-    
+
     def __init__(self):
         super().__init__("Session Reminder")
-    
+
     def validate_request(self, request: TestExecutionRequest) -> bool:
         """Validate Session Reminder test request"""
         # Add specific validation logic for session reminder tests
         return True
-    
+
     async def execute_test(self, request: TestExecutionRequest) -> TestExecutionResponse:
         """Execute Session Reminder compliance test"""
         start_time = time.time()
-        
+
         try:
             logger.info(f"Starting Session Reminder test for URL: {request.game_url}")
-            
+
             execution_time = time.time() - start_time
             test_id = make_stable_test_id(self.test_type, request.game_url, start_time)
 
             # Get array of testcases
             sub_test_id = request.additional_params["selectedTestCases"][0]
 
-
-            if(sub_test_id=='sr_001'):
+            if sub_test_id == "sr_001":
                 SR_script = r"""
                     console.log('Starting Session Reminder test script...');
                     let image_data = null;
@@ -77,9 +77,9 @@ class SessionReminderService(BaseTestService):
                     console.log("Detecting continue and exit buttons...");
 
                     if (isElectron()) {
-                    image_data = await window.api.captureScreenshot();
+                        image_data = await window.api.captureScreenshot();
                     } else {
-                    console.log("(Browser) Screenshot capture placeholder");
+                        console.log("(Browser) Screenshot capture placeholder");
                     }
 
                     // Try to detect "Continue"
@@ -87,11 +87,11 @@ class SessionReminderService(BaseTestService):
                     let result = await findTextInImage(image_data, "Continue");
 
                     if (result.found) {
-                    console.log(
-                        `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
-                    );
+                        console.log(
+                            `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
+                        );
                     } else {
-                    console.log('🧐 "Continue" not found.');
+                        console.log('🧐 "Continue" not found.');
                     }
 
                     // Try to detect "Exit Game"
@@ -99,102 +99,14 @@ class SessionReminderService(BaseTestService):
                     result = await findTextInImage(image_data, "Exit Game");
 
                     if (result.found) {
-                    console.log(
-                        `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
-                    );
+                        console.log(
+                            `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
+                        );
                     } else {
-                    console.warn('❌ "Exit Game" not found.');
+                        console.warn('❌ "Exit Game" not found.');
                     }
-
-                    """
-                pass
-            elif(sub_test_id=='sr_002'):
-                SR_script = r"""
-                    console.log('Starting Session Reminder test script...');
-                    let image_data = null;
-                    let x, y;
-
-                    const getTarget = (resp) => {
-                    const ct = resp && resp.results ? resp.results.click_targets : null;
-                    if (Array.isArray(ct)) {
-                        const t = ct.find(t => t && t.click_x != null && t.click_y != null) || ct[0];
-                        return t || {};
-                    }
-                    return ct || {};
-                    };
-
-                    let testType = "UI Element Detection";
-
-                    // Step 1
-                    if (isElectron()) {
-                    image_data = await window.api.captureScreenshot();
-                    } else {
-                    console.log('(Browser) Screenshot capture placeholder');
-                    }
-                    let response = await detectService(testType, 0, image_data);
-                    let target = getTarget(response);
-                    x = target.click_x || 0;
-                    y = target.click_y || 0;
-                    console.log(`Detected service at (${x}, ${y})`);
-                    await performClick(0, x, y);
-
-                    //wait 50 second
-                    console.log(`Waiting 50 seconds for session reminder popup to appear...`);
-                    await new Promise(resolve => setTimeout(resolve, 60000)); // wait 50s
-
-                    console.log("Detecting continue and exit buttons...");
-
-                    if (isElectron()) {
-                    image_data = await window.api.captureScreenshot();
-                    } else {
-                    console.log("(Browser) Screenshot capture placeholder");
-                    }
-
-                    // Try to detect "Continue"
-                    console.log("Detecting Continue button...");
-                    let result = await findTextInImage(image_data, "Continue");
-
-                    // if (result.found) {
-                    //   console.log(
-                    //     `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
-                    //   );
-
-                    // } else {
-                    //   console.log('🧐 "Continue" not found.');
-                    // }
-
-                    //Try to detect "Exit Game"
-                    console.log("Detecting Exit Game button...");
-                    result = await findTextInImage(image_data, "Exit Game");
-
-                    if (result.found) {
-                    console.log(
-                    `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
-
-                    x = result.best.x || 0;
-                    y = result.best.y || 0;
-
-                    await performClick(1, x, y);
-
-
-                    if (isElectron()) {
-                        image_data = await window.api.captureScreenshot();
-                    } else {
-                        console.log('(Browser) Screenshot capture placeholder');
-                    }
-                    response = await detectService(testType, 1, image_data);
-                    target = getTarget(response);
-                    x = target.click_x || 0;
-                    y = target.click_y || 0;
-                    console.log(`Detected service at (${x}, ${y})`);
-                    await performClick(1, x, y);
-                    );
-                    } else {
-                    console.warn('❌ "Exit Game" not found.');
-                    }
-                    """
-                pass
-            elif(sub_test_id=='sr_003'):
+                """
+            elif sub_test_id == "sr_002":
                 SR_script = r"""
                     console.log('Starting Session Reminder test script...');
                     let image_data = null;
@@ -222,58 +134,47 @@ class SessionReminderService(BaseTestService):
                     x = target.click_x || 0;
                     y = target.click_y || 0;
                     console.log(`Detected service at (${x}, ${y})`);
-                    await performClick(0, x, y);
+                    if (x != null && y != null) { await performClick(0, x, y); } else { console.warn('Skip click: no coords'); }
 
-                    //wait 50 second
+                    // wait 60 seconds for the popup
                     console.log(`Waiting 60 seconds for session reminder popup to appear...`);
-                    await new Promise(resolve => setTimeout(resolve, 60000)); // wait 50s
+                    await new Promise(resolve => setTimeout(resolve, 60000));
 
-                    console.log("Detecting continue and exit buttons...");
+                    console.log("Detecting continue  buttons...");
 
                     if (isElectron()) {
-                    image_data = await window.api.captureScreenshot();
+                        image_data = await window.api.captureScreenshot();
                     } else {
-                    console.log("(Browser) Screenshot capture placeholder");
+                        console.log("(Browser) Screenshot capture placeholder");
                     }
 
-                    // Try to detect Exit Game"
-                    console.log("Detecting  Exit Game button...");
-                    let result = await findTextInImage(image_data, "Exit Game");
-
+                    // Try to detect "Continue"
+                    console.log("Detecting Continue button...");
+                    let result = await findTextInImage(image_data, "Continue");
                     if (result.found) {
-                    console.log(
-                        `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
-                    );
-
-                    x = result.best.x|| 0;
-                    y = result.best.y || 0;
-
-                    await performClick(1, x, y);
-
-                    console.log(`Waiting 20 seconds for loading the error page...`)
-                    await new Promise(resolve => setTimeout(resolve, 20000)); // wait 10s
-
-
-                    if (isElectron()) {
-                    image_data = await window.api.captureScreenshot();
-                    } else {
-                        console.log('(Browser) Screenshot capture placeholder');
-                    }
-
-                    // Try to detect Error Keyword
-                    console.log("Detecting  Exit Game button...");
-                    let result2 = await findTextInImage(image_data, "Error");
-
-                    if (result2.found) {
-                    console.log(
-                        `🟢 Found "${result2.best.text}" at (${result2.best.x}, ${result2.best.y}) with confidence ${result2.best.confidence}%`
-                    );
-                    } else {
-                    console.log('🧐 "Error" not found.');
-                    }
+                        console.log(`Continue found at (${result.best.x}, ${result.best.y}) conf ${result.best.confidence}%`);
+                        
+                        x = result.best.x || 0;
+                        y = result.best.y || 0;
+                        if (x != null && y != null) { await performClick(1, x, y); }
+                        
+                        // then spin the game : 
+                        
+                        // Step 1
+                        if (isElectron()) {
+                            image_data = await window.api.captureScreenshot();
+                        } else {
+                            console.log('(Browser) Screenshot capture placeholder');
+                        }
+                        let response = await detectService(testType, 1, image_data);
+                        let target = getTarget(response);
+                        x = target.click_x || 0;
+                        y = target.click_y || 0;
+                        console.log(`Detected service at (${x}, ${y})`);
+                        if (x != null && y != null) { await performClick(0, x, y); } else { console.warn('Skip click: no coords for step 1'); }
 
                     } else {
-                    console.log('🧐 "Exit Game" not found.');
+                        console.log('"Continue" not found.');
                     }
 
                     // Try to detect "Exit Game"
@@ -281,15 +182,94 @@ class SessionReminderService(BaseTestService):
                     //result = await findTextInImage(image_data, "Exit Game");
 
                     //if (result.found) {
-                    //console.log(
-                    //    `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
-                    //);
+                    //    console.log(`🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`);
+                    //    
                     //} else {
-                    //console.warn('❌ "Exit Game" not found.');
+                    //    console.warn('❌ "Exit Game" not found.');
                     //}
-                    """
-                pass
-            elif(sub_test_id=='sr_004'):
+                """
+            elif sub_test_id == "sr_003":
+                SR_script = r"""
+                    console.log('Starting Session Reminder test script...');
+                    let image_data = null;
+                    let x, y;
+
+                    const getTarget = (resp) => {
+                        const ct = resp && resp.results ? resp.results.click_targets : null;
+                        if (Array.isArray(ct)) {
+                            const t = ct.find(t => t && t.click_x != null && t.click_y != null) || ct[0];
+                            return t || {};
+                        }
+                        return ct || {};
+                    };
+
+                    let testType = "UI Element Detection";
+
+                    // Step 1
+                    if (isElectron()) {
+                        image_data = await window.api.captureScreenshot();
+                    } else {
+                        console.log('(Browser) Screenshot capture placeholder');
+                    }
+                    let response = await detectService(testType, 0, image_data);
+                    let target = getTarget(response);
+                    x = target.click_x || 0;
+                    y = target.click_y || 0;
+                    console.log(`Detected service at (${x}, ${y})`);
+                    await performClick(0, x, y);
+
+                    //wait 60 second
+                    console.log(`Waiting 60 seconds for session reminder popup to appear...`);
+                    await new Promise(resolve => setTimeout(resolve, 60000));
+
+                    console.log("Detecting  exit buttons...");
+
+                    if (isElectron()) {
+                        image_data = await window.api.captureScreenshot();
+                    } else {
+                        console.log("(Browser) Screenshot capture placeholder");
+                    }
+
+                    // Try to detect Exit Game"
+                    console.log("Detecting  Exit Game button...");
+                    let result = await findTextInImage(image_data, "Exit Game");
+
+                    if (result.found) {
+                        console.log(
+                            `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
+                        );
+
+                        x = result.best.x|| 0;
+                        y = result.best.y || 0;
+
+                        await performClick(1, x, y);
+
+                        console.log(`Waiting 20 seconds for loading the error page...`)
+                        await new Promise(resolve => setTimeout(resolve, 20000));
+
+                        if (isElectron()) {
+                            image_data = await window.api.captureScreenshot();
+                        } else {
+                            console.log('(Browser) Screenshot capture placeholder');
+                        }
+
+                        // Try to detect Error Keyword
+                        console.log("Detecting  Exit Game button...");
+                        let result2 = await findTextInImage(image_data, "Error");
+
+                        if (result2.found) {
+                            console.log(
+                                `🟢 Found "${result2.best.text}" at (${result2.best.x}, ${result2.best.y}) with confidence ${result2.best.confidence}%`
+                            );
+                        } else {
+                            console.log('🧐 "Error" not found.');
+                        }
+
+                    } else {
+                        console.log('🧐 "Exit Game" not found.');
+                    }
+                """
+            elif sub_test_id == "sr_004":
                 SR_script = r"""
                     console.log('Starting Session Reminder test script...');
                     let image_data = null;
@@ -331,10 +311,7 @@ class SessionReminderService(BaseTestService):
                     y = target.click_y || 0;
                     console.log(`Detected service at (${x}, ${y})`);
                     await performClick(1, x, y);
-                    """
-                pass
-           
-            
+                """
 
             results_payload: Dict[str, Any] = {
                 "core_features_working": True,
@@ -351,11 +328,11 @@ class SessionReminderService(BaseTestService):
                 execution_time=execution_time,
                 results=results_payload
             )
-            
+
         except Exception as e:
             execution_time = time.time() - start_time
             logger.error(f"Session Reminder test failed: {str(e)}")
-            
+
             return TestExecutionResponse(
                 status="error",
                 message=f"Session Reminder test failed: {str(e)}",
@@ -363,7 +340,7 @@ class SessionReminderService(BaseTestService):
                 execution_time=execution_time,
                 results={"error": str(e)}
             )
-    
+
     async def _simulate_test_execution(self):
         """Simulate test execution delay"""
         # Simulate some processing time
@@ -382,4 +359,3 @@ class SessionReminderService(BaseTestService):
         if confidence >= threshold and click_x is not None and click_y is not None:
             return True
         return False
-

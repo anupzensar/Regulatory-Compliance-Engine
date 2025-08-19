@@ -22,6 +22,16 @@ const normalizeUrl = (raw) => {
   return url;
 };
 
+// Build backend base URL (Electron vs Browser)
+const getApiBaseUrl = () => {
+  try {
+    if (typeof window !== 'undefined' && window.api && typeof window.api.getBackendUrl === 'function') {
+      return window.api.getBackendUrl();
+    }
+  } catch {}
+  return import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:7000';
+};
+
 const HomePage = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [gameUrl, setGameUrl] = useState("");
@@ -32,6 +42,7 @@ const HomePage = () => {
   const toastTimeoutRef = useRef(null);
   const [orchestratorError, setOrchestratorError] = useState(null);
   const [finalResult, setFinalResult] = useState(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const { runTest, isLoading: isRunning, error, result } = useComplianceTest();
 
@@ -146,6 +157,20 @@ const HomePage = () => {
     } catch (err) {
       setOrchestratorError(err);
       showToast("error", err.message || "Test failed");
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    if (!finalResult?.reportContext) return;
+    try {
+      setIsGeneratingReport(true);
+      const resp = await (await import('../../services/api')).generateReport(finalResult.reportContext);
+      setFinalResult((prev) => ({ ...prev, report: resp }));
+      showToast('success', 'Report generated');
+    } catch (e) {
+      showToast('error', e?.message || 'Failed to generate report');
+    } finally {
+      setIsGeneratingReport(false);
     }
   };
 
@@ -366,6 +391,30 @@ const HomePage = () => {
               <p className="text-sm text-green-200">
                 Final Status: {finalResult.status || "success"}
               </p>
+              {finalResult.report?.url && (
+                <div className="mt-3">
+                  <a
+                    href={`${getApiBaseUrl()}${finalResult.report.url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Download Report
+                  </a>
+                </div>
+              )}
+              {!finalResult.report?.url && finalResult.reportContext && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={handleGenerateReport}
+                    disabled={isGeneratingReport}
+                    className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-600 disabled:opacity-75 transition-colors text-sm"
+                  >
+                    {isGeneratingReport ? 'Generating Report…' : 'Generate Report'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
