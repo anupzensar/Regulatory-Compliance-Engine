@@ -74,7 +74,7 @@ let target = getTarget(response);
 x = target.click_x || 0;
 y = target.click_y || 0;
 console.log(`Detected service at (${x}, ${y})`);
-await performClick(0, x, y);
+if (x != null && y != null) { await performClick(0, x, y); } else { console.warn('Skip click: no coords for step 1'); }
 
 // Step 2
 if (isElectron()) {
@@ -87,7 +87,7 @@ target = getTarget(response);
 x = target.click_x || 0;
 y = target.click_y || 0;
 console.log(`Detected service at (${x}, ${y})`);
-await performClick(1, x, y);
+if (x != null && y != null) { await performClick(1, x, y); } else { console.warn('Skip click: no coords for step 2'); }
 
 // Step 3
 if (isElectron()) {
@@ -100,7 +100,7 @@ target = getTarget(response);
 x = target.click_x || 0;
 y = target.click_y || 0;
 console.log(`Detected service at (${x}, ${y})`);
-await performClick(1, x, y);
+if (x != null && y != null) { await performClick(1, x, y); } else { console.warn('Skip click: no coords for step 3'); }
 
 // Step 4
 if (isElectron()) {
@@ -113,7 +113,7 @@ target = getTarget(response);
 x = target.click_x || 0;
 y = target.click_y || 0;
 console.log(`Detected service at (${x}, ${y})`);
-await performClick(15, x, y);
+if (x != null && y != null) { await performClick(15, x, y); } else { console.warn('Skip click: no coords for step 4'); }
 
 // Step 5
 if (isElectron()) {
@@ -126,7 +126,7 @@ target = getTarget(response);
 x = target.click_x || 0;
 y = target.click_y || 0;
 console.log(`Detected service at (${x}, ${y})`);
-await performClick(7, x, y);
+if (x != null && y != null) { await performClick(7, x, y); } else { console.warn('Skip click: no coords for step 5'); }
 
 // Step 6
 if (isElectron()) {
@@ -139,7 +139,7 @@ target = getTarget(response);
 x = target.click_x || 0;
 y = target.click_y || 0;
 console.log(`Detected service at (${x}, ${y})`);
-await performClick(10, x, y);
+if (x != null && y != null) { await performClick(10, x, y); } else { console.warn('Skip click: no coords for step 6'); }
 
 // Step 7 
 if (isElectron()) {
@@ -152,7 +152,7 @@ target = getTarget(response);
 x = target.click_x || 0;
 y = target.click_y || 0;
 console.log(`Detected service at (${x}, ${y})`);
-await performClick(11, x, y);
+if (x != null && y != null) { await performClick(11, x, y); } else { console.warn('Skip click: no coords for step 7'); }
 """
 
             results_payload: Dict[str, Any] = {

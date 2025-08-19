@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class TestExecutionRequest(BaseModel):
     """Base request model for test execution"""
     game_url: str
     test_type: str
-    additional_params: Dict[str, Any] = {}
+    additional_params: Dict[str, Any] = Field(default_factory=dict)
     image_data: str | None = None
 
 class TestExecutionResponse(BaseModel):
@@ -15,8 +15,8 @@ class TestExecutionResponse(BaseModel):
     message: str
     test_id: str
     execution_time: float = 0.0
-    test_flow: Dict[str, Any] = {}
-    results: Dict[str, Any] = {}
+    test_flow: Dict[str, Any] = Field(default_factory=dict)
+    results: Dict[str, Any] = Field(default_factory=dict)
 
 class BaseTestService(ABC):
     """Abstract base class for all test services"""
