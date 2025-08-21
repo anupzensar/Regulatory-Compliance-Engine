@@ -38,38 +38,27 @@ class HelpFileService(BaseTestService):
                 # --- UPDATED JAVASCRIPT WITH ROBUST TEXT SEARCHING ---
                 help_file_script = r"""
     console.log('Starting Help File test script with robust text searching...');
-
-    const getGameContext = () => {
-        const iframe = document.querySelector('iframe[id*="game"], iframe[name*="game"], iframe');
-        if (iframe && iframe.contentWindow) {
-            console.log('✅ Game iframe found. Operating within its context.');
-            return { window: iframe.contentWindow, document: iframe.contentWindow.document };
-        }
-        console.log('ℹ️ No iframe detected. Operating in the top-level test window context.');
-        return { window: window, document: document };
-    };
-
-    const gameContext = getGameContext();
+    
     let image_data = null;
     let x, y;
     
     // Click the "Continue" button using OCR
-    console.log('Finding "Continue" button...');
-    image_data = await captureScreenshot();
-    let helpResult = await findTextInImage(image_data, "Continue");
-    if (helpResult?.found) {
-        x = helpResult.best.x || 0;
-        y = helpResult.best.y || 0;
-        console.log(`✅ Detected "Continue" at (${x}, ${y}). Clicking...`);
-        await performClick(0, x, y);
-    } else {
-        console.error('❌ "Continue" button not detected. Cannot proceed.');
-        return; 
-    }
-
+    //console.log('Finding "Continue" button...');
+    //image_data = await captureScreenshot();
+    //let helpResult = await findTextInImage(image_data, "Continue");
+    //if (helpResult?.found) {
+    //    x = helpResult.best.x || 0;
+    //    y = helpResult.best.y || 0;
+    //    console.log(`✅ Detected "Continue" at (${x}, ${y}). Clicking...`);
+    //    await performClick(0, x, y);
+    //} else {
+    //    console.error('❌ "Continue" button not detected. Cannot proceed.');
+    //    // return; 
+    //}
+    
     // Click the "Help" button using OCR
     console.log('Finding "Help" button...');
-    image_data = await captureScreenshot();
+    image_data = await window.api.captureScreenshot();
     let cont_res = await findTextInImage(image_data, "Help");
     if (cont_res?.found) {
         x = cont_res.best.x || 0;
@@ -121,7 +110,7 @@ class HelpFileService(BaseTestService):
     const allFound = (flags) => Object.values(flags).every(Boolean);
 
     const TARGETS = [
-        'some settings or features may not be available in the game',
+        'Some settings and features may not be available in this game',
         'Any changes to game rules will be conducted in accordance with regulatory requirements'
     ];
 
@@ -142,10 +131,10 @@ class HelpFileService(BaseTestService):
         }
 
         let hasScrolled = false;
-        const oldScrollY = gameContext.window.scrollY;
-        gameContext.window.scrollBy(0, Math.floor(gameContext.window.innerHeight * 0.85));
+        const oldScrollY = window.scrollY;
+        window.scrollBy(0, Math.floor(window.innerHeight * 0.85));
         await new Promise(r => setTimeout(r, 1500));
-        if (gameContext.window.scrollY > oldScrollY) {
+        if (window.scrollY > oldScrollY) {
             hasScrolled = true;
         }
 
