@@ -91,6 +91,10 @@ export const performClick = async (classId, x, y) => {
  * - Sends gameUrl, testType, and optional suite/case selections
  * - If backend returns a `script`, execute it in-page (as before)
  */
+
+
+
+
 export const submitComplianceTest = async (
   gameUrl,
   testType,

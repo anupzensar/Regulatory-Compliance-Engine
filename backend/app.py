@@ -137,24 +137,60 @@ async def find_text_in_image(payload: OCRRequest):
         image_data = base64.b64decode(payload.imageData)
         image = Image.open(io.BytesIO(image_data)).convert("RGB")
         np_image = np.array(image)
+
         results = ocr_reader.readtext(np_image)
 
         query = normalize_text(payload.text)
         matches = []
-        # CORRECTED: The logic is now outside the loop to ensure all results are processed.
-        for (bbox, text, confidence) in results:
-            candidate = normalize_text(text)
-            if query in candidate or is_close_match(query, candidate):
-                x_coords = [point[0] for point in bbox]
-                y_coords = [point[1] for point in bbox]
-                matches.append({
-                    "text": text,
-                    "x": int(sum(x_coords) / len(x_coords)),
-                    "y": int(sum(y_coords) / len(y_coords)),
-                    "confidence": round(confidence * 100, 2)
-                })
 
-        # CORRECTED: This logic now correctly processes all found matches after the loop finishes.
+        def split_bbox_by_words(bbox, full_text):
+            """
+            Splits a bounding box into smaller boxes for each word.
+            Assumes horizontal word layout.
+            """
+            words = full_text.split()
+            if len(words) <= 1:
+                return [(full_text, bbox)]
+
+            min_x, max_x = min(p[0] for p in bbox), max(p[0] for p in bbox)
+            min_y, max_y = min(p[1] for p in bbox), max(p[1] for p in bbox)
+
+            total_width = max_x - min_x
+            avg_char_width = total_width / max(1, len(full_text))
+
+            word_boxes = []
+            current_x = min_x
+
+            for word in words:
+                word_width = len(word) * avg_char_width
+                word_bbox = [
+                    (current_x, min_y),
+                    (current_x + word_width, min_y),
+                    (current_x + word_width, max_y),
+                    (current_x, max_y),
+                ]
+                word_boxes.append((word, word_bbox))
+                current_x += word_width + avg_char_width  # add spacing
+            return word_boxes
+
+        for (bbox, text, confidence) in results:
+            # Split detected text into possible word boxes
+            for word, word_bbox in split_bbox_by_words(bbox, text):
+                candidate = normalize_text(word)
+
+                if query == candidate or is_close_match(query, candidate):
+                    x_coords = [p[0] for p in word_bbox]
+                    y_coords = [p[1] for p in word_bbox]
+                    center_x = int(sum(x_coords) / len(x_coords))
+                    center_y = int(sum(y_coords) / len(y_coords))
+
+                    matches.append({
+                        "text": word,
+                        "x": center_x,
+                        "y": center_y,
+                        "confidence": round(confidence * 100, 2)
+                    })
+
         if not matches:
             return {"found": False, "matches": []}
 
@@ -164,9 +200,11 @@ async def find_text_in_image(payload: OCRRequest):
             "best": best_match,
             "matches": matches
         }
+
     except Exception as e:
         logger.error(f"Error during OCR processing: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process image for OCR.")
+
 
 # --- Validation handler ---
 @app.exception_handler(RequestValidationError)

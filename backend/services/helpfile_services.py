@@ -43,7 +43,19 @@ class HelpFileService(BaseTestService):
 
             if sub_test_id == 'hf_001':
                 help_file_script = r"""
-                    console.log('Starting Help File test script...');
+                    console.log('Starting Help File test script (robust click + OCR scroll)...');
+                    
+                    const getGameContext = () => {
+                        const iframe = document.querySelector('iframe[id*="game"], iframe[name*="game"], iframe[src*="game"], iframe');
+                        if (iframe && iframe.contentWindow) {
+                            console.log('✅ Game iframe found. Operating within its context.', iframe);
+                            return { window: iframe.contentWindow, document: iframe.contentWindow.document };
+                        }
+                        console.log('ℹ️ No game iframe detected. Operating in the top-level window context.');
+                        return { window: window, document: document };
+                    };
+
+                    const gameContext = getGameContext();
                     let image_data = null;
                     let x, y;
 
@@ -58,157 +70,152 @@ class HelpFileService(BaseTestService):
 
                     let testType = "UI Element Detection";
 
-                    // Step 1: Click on Continue button/icon
+                    // Step 1: Detect initial service/UI element
                     if (isElectron()) {
                         image_data = await window.api.captureScreenshot();
-                    } else {
-                        console.log('(Browser) Screenshot capture placeholder');
                     }
                     let response = await detectService(testType, 0, image_data);
                     let target = getTarget(response);
                     x = target.click_x || 0;
                     y = target.click_y || 0;
-                    console.log(`Detected Continue button at (${x}, ${y})`);
+                    console.log(`Detected service at (${x}, ${y})`);
                     await performClick(0, x, y);
 
+                    // Targets to search in help content
+                    const TARGETS = [
+                        'some settings or features may not be available in the game',
+                        'any changes to game rules will be conducted in accordance with regulatory requirements'
+                    ];
 
-                    //click on the help button : 
-                    if (isElectron()) {
-                        image_data = await window.api.captureScreenshot();
-                    } else {
-                        console.log('(Browser) Screenshot capture placeholder');
-                    }
-                    let result = await findTextInImage(image_data, "Help");
-
-                    x = result.best.x || 0;
-                    y = result.best.y || 0;
-                    console.log(`Detected help button at (${x}, ${y})`);
-                    await performClick(0, x, y);
-
-                    // Wait for help file to load
-                    console.log('Waiting 10 seconds for help file to load...');
-                    await new Promise(resolve => setTimeout(resolve, 10000));
-
-                    // Function to capture help file content with scrolling
-                    const captureHelpFileContent = async () => {
-                        console.log('Capturing help file content...');
-                        
-                        // Try to find and click the help text link if available
-                        if (typeof window !== 'undefined' && window.document) {
-                            try {
-                                const container = document.getElementById('titan-infobar-helpTextLink');
-                                if (container) {
-                                    const span = container.querySelector('span');
-                                    if (span) {
-                                        console.log('[+] Help text link found, attempting click...');
-                                        span.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                        setTimeout(() => {
-                                            span.click();
-                                            console.log('→ Help text link clicked.');
-                                        }, 200);
-                                    }
+                    // 1) Try DOM-based click on the Help link
+                    const waitAndClickHelpLink = async (context, timeout = 30000, interval = 1000) => {
+                        console.log('Attempting to find and click Help link via DOM...');
+                        const start = Date.now();
+                        while (Date.now() - start < timeout) {
+                            const container = context.document.getElementById('titan-infobar-helpTextLink');
+                            if (container && container.querySelector('span')) {
+                                const span = container.querySelector('span');
+                                console.log('[+] Help link span found, attempting click...');
+                                span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                await new Promise(r => setTimeout(r, 200));
+                                try { span.click(); return true; } catch (e) {
+                                    try {
+                                        const ev = new MouseEvent('click', { view: context.window, bubbles: true, cancelable: true });
+                                        span.dispatchEvent(ev);
+                                        return true;
+                                    } catch (e2) {}
                                 }
-                            } catch (e) {
-                                console.log('Help text link interaction failed:', e);
                             }
+                            await new Promise(r => setTimeout(r, interval));
                         }
+                        console.warn('⏱ Help link not found via DOM within timeout.');
+                        return false;
+                    };
+                    const domClickSucceeded = await waitAndClickHelpLink(gameContext);
 
-                        // Wait a bit more for content to load
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-
-                        // Capture initial screenshot
+                    // 2) If DOM fails, fallback to OCR-based click
+                    if (!domClickSucceeded) {
+                        console.log('DOM help click failed, trying OCR-based click...');
                         if (isElectron()) {
                             image_data = await window.api.captureScreenshot();
-                        } else {
-                            console.log('(Browser) Screenshot capture placeholder');
                         }
-
-                        // Check for disclaimer text
-                        console.log('Checking for disclaimer text...');
-                        let disclaimerResult = await findTextInImage(image_data, 'some settings or features may not be available in the game');
+                        let helpResult = await findTextInImage(image_data, 'Help');
                         
-                        if (disclaimerResult.found) {
-                            console.log(`🟢 Found disclaimer text: "${disclaimerResult.best.text}" at (${disclaimerResult.best.x}, ${disclaimerResult.best.y})`);
-                        } else {
-                            console.log('🧐 Disclaimer text not found in initial view.');
-                        }
-
-                        // Check for UK RTS requirement text
-                        console.log('Checking for UK RTS requirement text...');
-                        let rtsResult = await findTextInImage(image_data, 'Any changes to game rules will be conducted in accordance with regulatory requirements');
+                        helpResult = await findTextInImage(image_data, "Help");
                         
-                        if (rtsResult.found) {
-                            console.log(`🟢 Found UK RTS text: "${rtsResult.best.text}" at (${rtsResult.best.x}, ${rtsResult.best.y})`);
+                        if (helpResult?.found) {
+                            x = helpResult.best.x || 0; y = helpResult.best.y || 0;
+                            console.log(`OCR: Detected help at (${x}, ${y})`);
+                            await performClick(1, x, y);
                         } else {
-                            console.log('🧐 UK RTS text not found in initial view.');
+                            console.warn('Help not detected via OCR');
+                        }
+                    }
+
+                    // 3) Wait for help to load
+                    console.log('Waiting for help content to load...');
+                    await new Promise(resolve => setTimeout(resolve, 8000));
+
+                    // 4) Scroll-and-scan loop
+                    async function searchTargetsInImage(b64, targets) {
+                        const flags = {};
+                        targets.forEach(t => flags[t] = false);
+                        for (const t of targets) {
+                            const r = await findTextInImage(b64, t);
+                            if (r?.found) { flags[t] = true; }
+                        }
+                        return flags;
+                    }
+                    const mergeFlags = (a, b) => ({...a, ...Object.fromEntries(Object.entries(b).map(([k, v]) => [k, a[k] || v])) });
+                    const allFound = (flags) => Object.values(flags).every(Boolean);
+
+                    let aggregated = {}; TARGETS.forEach(t => aggregated[t] = false);
+                    const maxScrolls = 12;
+
+                    for (let i = 0; i < maxScrolls && !allFound(aggregated); i++) {
+                        // CAPTURE: One screenshot is taken at the start of each scroll cycle.
+                        if (isElectron()) {
+                            image_data = await window.api.captureScreenshot();
+                        }
+                        const flags = await searchTargetsInImage(image_data, TARGETS);
+                        aggregated = mergeFlags(aggregated, flags);
+                        console.log(`Scan ${i + 1}/${maxScrolls} →`, aggregated);
+
+                        if (allFound(aggregated)) {
+                             console.log('✅ All targets found!');
+                             break;
                         }
 
-                        // If texts not found, try scrolling and capturing more content
-                        if (!disclaimerResult.found || !rtsResult.found) {
-                            console.log('Some required text not found. Attempting to scroll and capture more content...');
-                            
-                            // Try to scroll down to see more content
-                            if (typeof window !== 'undefined' && window.document) {
-                                try {
-                                    // Scroll down to see more content
-                                    window.scrollBy(0, 500);
-                                    await new Promise(resolve => setTimeout(resolve, 1000));
-                                    
-                                    // Capture screenshot after scroll
-                                    if (isElectron()) {
-                                        image_data = await window.api.captureScreenshot();
-                                    } else {
-                                        console.log('(Browser) Screenshot capture placeholder after scroll');
-                                    }
+                        
+                        let hasScrolled = false;
+                        
+                        // 1. Get current scroll positions of window and any inner elements
+                        const scrollPositionsBefore = new Map();
+                        const selectors = ['.help-content', '.help-container', '.modal-content', '.popup-content', '.scrollable', '[data-scrollable="true"]', '.help-text-container', '.help-body'];
+                        const scrollableElements = [];
 
-                                    // Check again for missing texts
-                                    if (!disclaimerResult.found) {
-                                        disclaimerResult = await findTextInImage(image_data, 'some settings or features may not be available in the game');
-                                        if (disclaimerResult.found) {
-                                            console.log(`🟢 Found disclaimer text after scroll: "${disclaimerResult.best.text}"`);
-                                        }
-                                    }
+                        scrollPositionsBefore.set(gameContext.window, gameContext.window.scrollY);
+                        for (const sel of selectors) {
+                            const el = gameContext.document.querySelector(sel);
+                            if (el && el.scrollHeight > el.clientHeight) {
+                                scrollableElements.push(el);
+                                scrollPositionsBefore.set(el, el.scrollTop);
+                            }
+                        }
+                        
+                        // 2. Attempt to scroll everything
+                        gameContext.window.scrollBy(0, Math.floor(gameContext.window.innerHeight * 0.85));
+                        scrollableElements.forEach(el => {
+                            el.scrollTop += Math.floor(el.clientHeight * 0.85);
+                        });
 
-                                    if (!rtsResult.found) {
-                                        rtsResult = await findTextInImage(image_data, 'Any changes to game rules will be conducted in accordance with regulatory requirements');
-                                        if (rtsResult.found) {
-                                            console.log(`🟢 Found UK RTS text after scroll: "${rtsResult.best.text}"`);
-                                        }
-                                    }
+                        await new Promise(r => setTimeout(r, 1500)); // Wait for scroll to render
 
-                                    // Scroll back up
-                                    window.scrollBy(0, -500);
-                                    
-                                } catch (e) {
-                                    console.log('Scrolling interaction failed:', e);
-                                }
+                        // 3. Check if anything actually scrolled
+                        if (gameContext.window.scrollY > scrollPositionsBefore.get(gameContext.window)) {
+                            hasScrolled = true;
+                        }
+                        for(const el of scrollableElements) {
+                            if (el.scrollTop > scrollPositionsBefore.get(el)) {
+                                hasScrolled = true;
+                                break;
                             }
                         }
 
-                        // Final summary
-                        console.log('=== Help File Compliance Check Summary ===');
-                        if (disclaimerResult.found) {
-                            console.log('✅ Disclaimer text found');
-                        } else {
-                            console.log('❌ Disclaimer text not found');
+                        // 4. If no scroll occurred, we are at the end. Stop the loop.
+                        if (!hasScrolled) {
+                            console.log('🛑 Scroll position has not changed. End of content reached.');
+                            break;
                         }
-                        
-                        if (rtsResult.found) {
-                            console.log('✅ UK RTS requirement text found');
-                        } else {
-                            console.log('❌ UK RTS requirement text not found');
-                        }
-
-                        return {
-                            disclaimer_found: disclaimerResult.found,
-                            rts_text_found: rtsResult.found
-                        };
-                    };
-
-                    // Execute the help file content capture
-                    const result = await captureHelpFileContent();
-                    console.log('Help file test completed:', result);
-                    """
+                        // ===========================================================================
+                    }
+                    
+                    console.log('=== Help File Compliance Check Summary ===');
+                    for (const t of TARGETS) {
+                        console.log(`'${t}' → ${aggregated[t] ? 'FOUND ✅' : 'NOT FOUND ❌'}`);
+                    }
+                    console.log('Help file test completed.');
+                """
             else:
                 # Default help file script for other test cases
                 help_file_script = r"""
@@ -246,7 +253,6 @@ class HelpFileService(BaseTestService):
     
     async def _simulate_test_execution(self):
         """Simulate test execution delay"""
-        # Simulate some processing time
         await asyncio.sleep(0.5)
 
     def validate_step(self, class_id: int, detection: Dict[str, Any], threshold: float = DEFAULT_CONFIDENCE_THRESHOLD) -> bool:
@@ -262,4 +268,3 @@ class HelpFileService(BaseTestService):
         if confidence >= threshold and click_x is not None and click_y is not None:
             return True
         return False
-    
