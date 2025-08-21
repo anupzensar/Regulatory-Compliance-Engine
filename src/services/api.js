@@ -44,8 +44,6 @@ apiClient.interceptors.response.use(
 
 /**
  * Check backend status
- * - Electron → calls preload's checkBackendStatus
- * - Browser → GET /
  */
 export const checkBackendStatus = async () => {
   if (isElectron()) {
@@ -66,13 +64,10 @@ export const checkBackendStatus = async () => {
 };
 
 /**
- * Perform click
- * - Electron → calls preload's performClick
- * - Browser → No-op (could add browser-side simulation)
+ * Perform click (Electron only)
  */
 export const performClick = async (classId, x, y) => {
   if (isElectron()) {
-    // sanitize/round coords
     const xi = Number.isFinite(Number(x)) ? Math.round(Number(x)) : null;
     const yi = Number.isFinite(Number(y)) ? Math.round(Number(y)) : null;
     if (xi == null || yi == null) {
@@ -86,15 +81,12 @@ export const performClick = async (classId, x, y) => {
   }
 };
 
+// Keep last used URL for per-step calls
+let lastGameUrl = null;
+
 /**
- * Submit compliance/regression test via /run-test
- * - Sends gameUrl, testType, and optional suite/case selections
- * - If backend returns a `script`, execute it in-page (as before)
+ * Main compliance test executor
  */
-
-
-
-
 export const submitComplianceTest = async (
   gameUrl,
   testType,
@@ -104,7 +96,6 @@ export const submitComplianceTest = async (
 ) => {
   try {
     console.log('calling the api');
-    // make gameUrl available to detectService
     lastGameUrl = gameUrl;
 
     const payload = {
@@ -113,8 +104,7 @@ export const submitComplianceTest = async (
       selectedPolicy: selectedPolicy ?? null,
       selectedTestSuite: selectedTestSuite ?? null,
       selectedTestCases: selectedTestCases ?? null,
-      // class_id/imageData are provided per-step via detectService()
-      additionalParams: {}
+      additionalParams: {},
     };
     console.log('payload:', payload);
 
@@ -123,29 +113,51 @@ export const submitComplianceTest = async (
     console.log('api response received');
     console.log('Response data:', res.data);
 
-
     if (res.data.script) {
       console.log('📜 Executing backend script...');
 
-      // Collect logs and step snapshots for PDF report
       const logs = [];
       const steps = [];
+
       const originalLog = console.log;
       const originalWarn = console.warn;
       const originalError = console.error;
+
       try {
-        console.log = (...args) => { logs.push(args.map(String).join(' ')); originalLog(...args); };
-        console.warn = (...args) => { logs.push('[WARN] ' + args.map(String).join(' ')); originalWarn(...args); };
-        console.error = (...args) => { logs.push('[ERROR] ' + args.map(String).join(' ')); originalError(...args); };
+        console.log = (...args) => {
+          logs.push(args.map(String).join(' '));
+          originalLog(...args);
+        };
+        console.warn = (...args) => {
+          logs.push('[WARN] ' + args.map(String).join(' '));
+          originalWarn(...args);
+        };
+        console.error = (...args) => {
+          logs.push('[ERROR] ' + args.map(String).join(' '));
+          originalError(...args);
+        };
 
         const recordStep = async (classId, x, y) => {
           try {
             if (isElectron() && window.api?.captureScreenshot) {
               const b64 = await window.api.captureScreenshot();
-              const dataUri = `data:image/png;base64,${b64}`;
-              steps.push({ step_index: steps.length + 1, class_id: classId, x, y, imageData: dataUri, timestamp: new Date().toISOString() });
+              steps.push({
+                step_index: steps.length + 1,
+                class_id: classId,
+                x,
+                y,
+                imageData: `data:image/png;base64,${b64}`,
+                timestamp: new Date().toISOString(),
+              });
             } else {
-              steps.push({ step_index: steps.length + 1, class_id: classId, x, y, imageData: null, timestamp: new Date().toISOString() });
+              steps.push({
+                step_index: steps.length + 1,
+                class_id: classId,
+                x,
+                y,
+                imageData: null,
+                timestamp: new Date().toISOString(),
+              });
             }
           } catch (e) {
             logs.push('[recordStep error] ' + String(e?.message || e));
@@ -156,21 +168,20 @@ export const submitComplianceTest = async (
           try {
             if (isElectron() && window.api?.captureScreenshot) {
               const b64 = await window.api.captureScreenshot();
-              const dataUri = `data:image/png;base64,${b64}`;
-              steps.push({ 
-                step_index: steps.length + 1, 
-                operation: operation,
-                details: details,
-                imageData: dataUri, 
-                timestamp: new Date().toISOString() 
+              steps.push({
+                step_index: steps.length + 1,
+                operation,
+                details,
+                imageData: `data:image/png;base64,${b64}`,
+                timestamp: new Date().toISOString(),
               });
             } else {
-              steps.push({ 
-                step_index: steps.length + 1, 
-                operation: operation,
-                details: details,
-                imageData: null, 
-                timestamp: new Date().toISOString() 
+              steps.push({
+                step_index: steps.length + 1,
+                operation,
+                details,
+                imageData: null,
+                timestamp: new Date().toISOString(),
               });
             }
           } catch (e) {
@@ -198,6 +209,7 @@ export const submitComplianceTest = async (
           }
         };
 
+        // ✅ FIX: Added missing comma before template literal
         const executeScript = new Function(
           'isElectron',
           'detectService',
@@ -205,6 +217,7 @@ export const submitComplianceTest = async (
           'performClick',
           'window',
           'captureScreenshot',
+          'extractParagraphFromImage',
           `return (async () => { ${res.data.script} })();`
         );
 
@@ -216,7 +229,16 @@ export const submitComplianceTest = async (
         const findTextInImageBound = async (imageData, text) =>
           await wrappedFindTextInImage(imageData, text);
 
-        await executeScript(isElectron, detectServiceBound, findTextInImageBound, wrappedPerformClick, window, wrappedCaptureScreenshot);
+        await executeScript(
+          isElectron,
+          detectServiceBound,
+          findTextInImageBound,
+          wrappedPerformClick,
+          window,
+          wrappedCaptureScreenshot,
+          extractParagraphFromImage
+        );
+
         console.log('✅ Script execution finished');
 
         // Generate PDF report
@@ -265,18 +287,16 @@ export const submitComplianceTest = async (
   }
 };
 
-// Manually trigger PDF generation (use saved reportContext from a prior run)
+/**
+ * Report generation
+ */
 export const generateReport = async (reportContext) => {
   const res = await apiClient.post('/reports/generate', reportContext);
   return res.data;
 };
 
-// Keep last used URL for per-step calls
-let lastGameUrl = null;
-
 /**
- * Per-step detection service
- * - Sends class_ids and imageData inside additionalParams
+ * Detection service (per-step)
  */
 const detectService = async (testType, classID, image_data) => {
   console.log(`Detecting service for type: ${testType}, classID: ${classID}`);
@@ -291,7 +311,6 @@ const detectService = async (testType, classID, image_data) => {
     };
 
     const res = await apiClient.post('/run-test', payload);
-    // return only the data so the script can access response.results.*
     return res.data;
   } catch (error) {
     if (error.response?.status === 400) {
@@ -306,12 +325,34 @@ const detectService = async (testType, classID, image_data) => {
   }
 };
 
+/**
+ * OCR extract full paragraph
+ */
+const extractParagraphFromImage = async (imageData) => {
+  try {
+    const text="";
+    const payload = { imageData  , text};
+    const res = await apiClient.post('/ocr/extract-paragraph', payload);
+    return res.data;
+  } catch (error) {
+    if (error.response?.status === 400) {
+      throw new Error(error.response.data.detail || 'Invalid request');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error. Try later.');
+    } else if (error.code === 'ECONNABORTED') {
+      throw new Error('Request timeout.');
+    } else {
+      throw new Error('Network error.');
+    }
+  }
+};
+
+/**
+ * OCR find specific text
+ */
 const findTextInImage = async (imageData, text) => {
   try {
-    const payload = {
-      imageData,
-      text,
-    };
+    const payload = { imageData, text };
     const res = await apiClient.post('/ocr/find-text', payload);
     return res.data;
   } catch (error) {
@@ -328,5 +369,3 @@ const findTextInImage = async (imageData, text) => {
 };
 
 export default apiClient;
-
-

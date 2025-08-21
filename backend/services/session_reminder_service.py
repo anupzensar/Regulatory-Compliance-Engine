@@ -94,16 +94,16 @@ class SessionReminderService(BaseTestService):
                         console.log('🧐 "Continue" not found.');
                     }
 
-                    // Try to detect "Exit Game"
-                    console.log("Detecting Exit Game button...");
-                    result = await findTextInImage(image_data, "Exit Game");
+                    // Try to detect "Exit"
+                    console.log("Detecting Exit button...");
+                    result = await findTextInImage(image_data, "Exit");
 
                     if (result.found) {
                         console.log(
                             `🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`
                         );
                     } else {
-                        console.warn('❌ "Exit Game" not found.');
+                        console.warn('❌ "Exit" not found.');
                     }
                 """
             elif sub_test_id == "sr_002":
@@ -177,15 +177,15 @@ class SessionReminderService(BaseTestService):
                         console.log('"Continue" not found.');
                     }
 
-                    // Try to detect "Exit Game"
-                    //console.log("Detecting Exit Game button...");
-                    //result = await findTextInImage(image_data, "Exit Game");
+                    // Try to detect "Exit"
+                    //console.log("Detecting Exit button...");
+                    //result = await findTextInImage(image_data, "Exit");
 
                     //if (result.found) {
                     //    console.log(`🟢 Found "${result.best.text}" at (${result.best.x}, ${result.best.y}) with confidence ${result.best.confidence}%`);
                     //    
                     //} else {
-                    //    console.warn('❌ "Exit Game" not found.');
+                    //    console.warn('❌ "Exit" not found.');
                     //}
                 """
             elif sub_test_id == "sr_003":
@@ -230,9 +230,9 @@ class SessionReminderService(BaseTestService):
                         console.log("(Browser) Screenshot capture placeholder");
                     }
 
-                    // Try to detect Exit Game"
-                    console.log("Detecting  Exit Game button...");
-                    let result = await findTextInImage(image_data, "Exit Game");
+                    // Try to detect Exit"
+                    console.log("Detecting  Exit button...");
+                    let result = await findTextInImage(image_data, "Exit");
 
                     if (result.found) {
                         console.log(
@@ -254,7 +254,7 @@ class SessionReminderService(BaseTestService):
                         }
 
                         // Try to detect Error Keyword
-                        console.log("Detecting  Exit Game button...");
+                        console.log("Detecting  Exit button...");
                         let result2 = await findTextInImage(image_data, "Error");
 
                         if (result2.found) {
@@ -266,7 +266,7 @@ class SessionReminderService(BaseTestService):
                         }
 
                     } else {
-                        console.log('🧐 "Exit Game" not found.');
+                        console.log('🧐 "Exit" not found.');
                     }
                 """
             elif sub_test_id == "sr_004":

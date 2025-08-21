@@ -205,6 +205,36 @@ async def find_text_in_image(payload: OCRRequest):
         logger.error(f"Error during OCR processing: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process image for OCR.")
 
+@app.post("/ocr/extract-paragraph")
+async def extract_paragraph_from_image(payload: OCRRequest):
+    try:
+        image_data = base64.b64decode(payload.imageData)
+        image = Image.open(io.BytesIO(image_data)).convert("RGB")
+        np_image = np.array(image)
+
+        results = ocr_reader.readtext(np_image)
+
+        if not results:
+            return {"found": False, "paragraph": ""}
+
+        # Sort by y (top to bottom), then x (left to right)
+        sorted_results = sorted(results, key=lambda r: (min(p[1] for p in r[0]), min(p[0] for p in r[0])))
+
+        extracted_texts = [text for (_, text, confidence) in sorted_results]
+
+        # Join all texts into a paragraph
+        paragraph = " ".join(extracted_texts)
+
+        return {
+            "found": True,
+            "paragraph": paragraph.strip()
+        }
+
+    except Exception as e:
+        logger.error(f"Error during OCR extraction: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to extract text from image.")
+
+
 
 # --- Validation handler ---
 @app.exception_handler(RequestValidationError)
@@ -330,6 +360,7 @@ async def generate_report(payload: ReportRequest):
         raise HTTPException(status_code=500, detail=f"Failed to generate PDF report: {e}")
 
     return {"status": "success", "report_id": base_name, "url": f"/reports/{base_name}"}
+
 
 # Mount static directory for serving generated reports
 app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
