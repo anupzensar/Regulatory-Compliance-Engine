@@ -12,6 +12,8 @@ import { GOVERNMENT_POLICIES, TEST_SUITES } from "../../constants/testOptions";
 import Toast from "../ui/Toast";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { useComplianceTest } from "../../hooks/useComplianceTest";
+import logoLight from "../../assets/logo.png";
+import logoDark from "../../assets/logo-dark.png";
 
 const normalizeUrl = (raw) => {
   let url = raw.trim();
@@ -28,7 +30,7 @@ const getApiBaseUrl = () => {
     if (typeof window !== 'undefined' && window.api && typeof window.api.getBackendUrl === 'function') {
       return window.api.getBackendUrl();
     }
-  } catch {}
+  } catch { }
   return import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:7000';
 };
 
@@ -214,7 +216,11 @@ const HomePage = () => {
               className={`w-10 h-10 ${isDarkMode ? "bg-slate-600" : "bg-gray-200"
                 } rounded-lg flex items-center justify-center`}
             >
-              <span className="text-lg font-bold">RCE</span>
+              <img
+                src={isDarkMode ? logoLight : logoDark}
+                alt="RCE Logo"
+                className="w-12 h-12 object-contain"
+              />
             </div>
           </div>
           <div className="flex items-center space-x-4">
