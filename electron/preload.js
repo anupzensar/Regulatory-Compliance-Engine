@@ -72,6 +72,8 @@ async function clickAtXY(rawX, rawY, options = {}) {
 // ---- Context Bridge Exports ----
 contextBridge.exposeInMainWorld('api', {
     // Backend & messaging utilities
+    scrollTestWindow: (percentY) => ipcRenderer.invoke('scroll-test-window', percentY),
+
     sendMessage: (channel, data) => ipcRenderer.send(channel, data),
     onMessage: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args)),
     checkBackendStatus: () => ipcRenderer.invoke('check-backend-status'),

@@ -123,22 +123,21 @@ class HelpFileService(BaseTestService):
     
         const flags = await searchTargetsInImage(image_data, TARGETS);
         aggregated = mergeFlags(aggregated, flags);
-        console.log(`Scan results:`, aggregated);
+        console.log('Scan results:', aggregated);
 
         if (allFound(aggregated)) {
             console.log('🎉 All targets found! Ending scroll loop.');
             break;
         }
 
-        let hasScrolled = false;
-        const oldScrollY = window.scrollY;
-        window.scrollBy(0, Math.floor(window.innerHeight * 0.85));
-        await new Promise(r => setTimeout(r, 1500));
-        if (window.scrollY > oldScrollY) {
-            hasScrolled = true;
-        }
+        console.log('Scrolling down...');
+        // Use the new function that targets the testWindow and returns a result
+        const scrollResult = await scrollTestWindow(0.85); // Scroll by 85% of window height
+        await new Promise(r => setTimeout(r, 1500)); // Wait for scroll animation to settle
 
-        if (!hasScrolled && i > 0) {
+        // ✅ CHECK IF SCROLLING STOPPED: Use the boolean returned by the function.
+        // This is more reliable than checking scrollY from the wrong window context.
+        if (!scrollResult?.didScroll && i > 0) {
             console.log('🛑 Scroll position did not change. Reached end of content.');
             break;
         }

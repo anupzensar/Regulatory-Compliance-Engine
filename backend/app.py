@@ -7,6 +7,7 @@ import re
 from typing import Any, Dict, List, Optional
 import os
 from datetime import datetime
+import cv2
 
 import easyocr
 import numpy as np
@@ -234,6 +235,60 @@ async def extract_paragraph_from_image(payload: OCRRequest):
         logger.error(f"Error during OCR extraction: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to extract text from image.")
 
+
+@app.post("/ocr/extract-paragraph2")
+async def extract_paragraph_from_image2(payload: OCRRequest):
+    try:
+        # Decode base64 to image
+        image_data = base64.b64decode(payload.imageData)
+        image = Image.open(io.BytesIO(image_data)).convert("RGB")
+
+        # ---------- Preprocessing ----------
+        # Convert to grayscale
+        gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+
+        # Apply threshold to improve text visibility
+        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # Resize to help OCR detect smaller fonts
+        scale_percent = 150  # upscale by 1.5x
+        width = int(thresh.shape[1] * scale_percent / 100)
+        height = int(thresh.shape[0] * scale_percent / 100)
+        resized = cv2.resize(thresh, (width, height), interpolation=cv2.INTER_LINEAR)
+
+        # Convert back to 3-channel for EasyOCR
+        processed_image = cv2.cvtColor(resized, cv2.COLOR_GRAY2RGB)
+
+        # ---------- Run OCR ----------
+        results = ocr_reader.readtext(processed_image, detail=1, paragraph=False)
+
+        if not results:
+            return {"found": False, "paragraph": ""}
+
+        # ---------- Sort results (top to bottom, left to right) ----------
+        sorted_results = sorted(
+            results,
+            key=lambda r: (min(p[1] for p in r[0]), min(p[0] for p in r[0]))
+        )
+
+        extracted_texts = []
+        for (_, text, confidence) in sorted_results:
+            # Clean text to ensure numbers & symbols aren't lost
+            cleaned_text = "".join(ch for ch in text if ch.isprintable())
+            if cleaned_text.strip():
+                extracted_texts.append(cleaned_text)
+
+        # Merge into a paragraph
+        paragraph = " ".join(extracted_texts)
+
+        return {
+            "found": True,
+            "paragraph": paragraph.strip()
+        }
+
+    except Exception as e:
+        logger.error(f"Error during OCR extraction: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to extract text from image.")
 
 
 # --- Validation handler ---

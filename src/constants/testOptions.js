@@ -30,11 +30,28 @@ export const TEST_SUITES = [
         id: 'sr_003',
         name: 'Exit Game Button Test',
         description: 'Ensure that the Exit Game button takes you to the lobby'
+      }
+    ]
+  },
+  {
+    "label": "Net Position",
+    "value": "net_position",
+    "description": "Test cases for verifying Net Position functionality.",
+    "test_cases": [
+      {
+        "id": "sr_001",
+        "name": "Verify Net Position Visibility",
+        "description": "Ensures the Net Position display is visible on the game's top bar."
       },
       {
-        id: 'sr_004',
-        name: 'Background Game Pause Test',
-        description: 'Ensure that when the session reminder pops up, the game does not continue in the background'
+        "id": "sr_002",
+        "name": "Verify Net Position on a Neutral Spin",
+        "description": "Ensures the Net Position value should be zero after completion of the spin."
+      },
+      {
+        "id": "sr_003",
+        "name": "Verify Net Position on a Winning Spin",
+        "description": "Ensures the Net Position value increases correctly after a winning spin."
       }
     ]
   },
@@ -72,23 +89,23 @@ export const TEST_SUITES = [
       }
     ]
   },
-  {
-    label: 'Banking',
-    value: 'banking',
-    description: 'Verify banking and payment compliance',
-    test_cases: [
-      {
-        id: 'b_001',
-        name: 'Banking Menu Test',
-        description: 'Menu - Banking Option Works'
-      },
-      {
-        id: 'b_002',
-        name: 'Deposit Functionality Test',
-        description: 'Player can successfully Deposit and Credit Balance updates correctly'
-      }
-    ]
-  },
+  // {
+  //   label: 'Banking',
+  //   value: 'banking',
+  //   description: 'Verify banking and payment compliance',
+  //   test_cases: [
+  //     {
+  //       id: 'b_001',
+  //       name: 'Banking Menu Test',
+  //       description: 'Menu - Banking Option Works'
+  //     },
+  //     {
+  //       id: 'b_002',
+  //       name: 'Deposit Functionality Test',
+  //       description: 'Player can successfully Deposit and Credit Balance updates correctly'
+  //     }
+  //   ]
+  // },
   {
     label: 'Practice Play',
     value: 'practice_play',
