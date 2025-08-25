@@ -284,6 +284,33 @@ ipcMain.handle('click-in-dom', async (event, rawX, rawY, options = {}) => {
     }
 });
 
+// In main.cjs, add this new handler alongside your others (like 'perform-click')
+
+/**
+ * Executes a scroll command within the test window.
+ * Scrolls by a percentage of the window's inner height.
+ */
+ipcMain.handle('scroll-test-window', async (event, percentY) => {
+    if (!testWindow || testWindow.isDestroyed()) {
+        throw new Error('Test window is not available for scrolling.');
+    }
+    try {
+        const script = `
+            const scrollAmount = Math.floor(window.innerHeight * ${percentY});
+            const oldScrollY = window.scrollY;
+            window.scrollBy(0, scrollAmount);
+            // Return true if the scroll position actually changed
+            return window.scrollY > oldScrollY;
+        `;
+        const didScroll = await testWindow.webContents.executeJavaScript(script, true);
+        return { success: true, didScroll: didScroll };
+    } catch (err) {
+        console.error('Failed to execute scroll in test window:', err);
+        return { success: false, error: err.message, didScroll: false };
+    }
+});
+
+
 
 /**
  * Returns metrics about the test window including size, approximate zoom, and devicePixelRatio.

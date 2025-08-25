@@ -16,6 +16,7 @@ lerna-debug.log*
 
 # Python dependencies and virtual environments
 backend/__pycache__/
+backend/services/__pycache__/
 backend/*.pyc
 backend/*.pyo
 backend/*.pyd

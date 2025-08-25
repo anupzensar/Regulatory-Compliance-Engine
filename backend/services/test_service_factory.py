@@ -10,6 +10,9 @@ from .max_bet_limit_service import MaxBetLimitService
 from .detect_service import DetectService
 from .regression_service import RegressionService
 from .helpfile_services import HelpFileService
+from .net_position_services import NetPositionService
+
+# Configure logging
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +34,8 @@ class TestServiceFactory:
             MaxBetLimitService(),
             DetectService(),
             RegressionService(),
-            HelpFileService()
+            HelpFileService(),
+            NetPositionService()
         ]
         
         for service in services:

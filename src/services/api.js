@@ -208,16 +208,27 @@ export const submitComplianceTest = async (
             return null;
           }
         };
+        
+        // ✅ NEW: Wrapper for the new scroll function
+        const wrappedScrollTestWindow = async (percentY) => {
+            await recordImageStep('Scroll', { percentY });
+            if (isElectron() && window.api?.scrollTestWindow) {
+                return await window.api.scrollTestWindow(percentY);
+            }
+            console.warn('Scrolling is only available in Electron.');
+            return { success: false, didScroll: false };
+        };
 
-        // ✅ FIX: Added missing comma before template literal
+        // ✅ UPDATED: Removed 'window', added 'scrollTestWindow'
         const executeScript = new Function(
           'isElectron',
           'detectService',
           'findTextInImage',
           'performClick',
-          'window',
           'captureScreenshot',
           'extractParagraphFromImage',
+          'extractParagraphFromImage2',
+          'scrollTestWindow', // <-- ADDED
           `return (async () => { ${res.data.script} })();`
         );
 
@@ -229,14 +240,16 @@ export const submitComplianceTest = async (
         const findTextInImageBound = async (imageData, text) =>
           await wrappedFindTextInImage(imageData, text);
 
+        // ✅ UPDATED: Removed 'window', added 'wrappedScrollTestWindow'
         await executeScript(
           isElectron,
           detectServiceBound,
           findTextInImageBound,
           wrappedPerformClick,
-          window,
           wrappedCaptureScreenshot,
-          extractParagraphFromImage
+          extractParagraphFromImage,
+          extractParagraphFromImage2,
+          wrappedScrollTestWindow // <-- ADDED
         );
 
         console.log('✅ Script execution finished');
@@ -333,6 +346,25 @@ const extractParagraphFromImage = async (imageData) => {
     const text="";
     const payload = { imageData  , text};
     const res = await apiClient.post('/ocr/extract-paragraph', payload);
+    return res.data;
+  } catch (error) {
+    if (error.response?.status === 400) {
+      throw new Error(error.response.data.detail || 'Invalid request');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error. Try later.');
+    } else if (error.code === 'ECONNABORTED') {
+      throw new Error('Request timeout.');
+    } else {
+      throw new Error('Network error.');
+    }
+  }
+};
+
+const extractParagraphFromImage2 = async (imageData) => {
+  try {
+    const text="";
+    const payload = { imageData  , text};
+    const res = await apiClient.post('/ocr/extract-paragraph2', payload);
     return res.data;
   } catch (error) {
     if (error.response?.status === 400) {
